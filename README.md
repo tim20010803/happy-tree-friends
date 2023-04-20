@@ -1,11 +1,2 @@
 # happy-tree-friends
 
-
-
-
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/tim20010803/happy-tree-friends.git
-git push -u origin main
