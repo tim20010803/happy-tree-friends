@@ -1,20 +1,20 @@
 # Project name: happy-tree-friends
 ## General Guidelines and Requirements
-1. Must parallelize your program by at least one of the following methods
-  a. OpenMP (minimum requirement)
-  b. MPI (get bonus point)
-  c. GPU (get extra bonus point)
-2. Must provide convincing demonstration of the accuracy and performance of your program
-3. Must use GitHub for collaborative development
-  a. Tutorial: https://gitbook.tw/
-  b. Use the Fork→Pull→Push→Pull Request→Merge workflow
-  c. Do NOT just upload the final code → must keep the development history on GitHub
-4. Students per group: 2
-  a. Inform the TA before April 26
-5. Final presentation: June 7
-  a. 25 mins presentation + 10 mins questions
-  b. All students are encouraged to ask ANY questions
-6. Bonus points: Surprise Me!!!
+-  Must parallelize your program by at least one of the following methods
+    -  OpenMP (minimum requirement)
+    -  MPI (get bonus point)
+    -  GPU (get extra bonus point)
+-  Must provide convincing demonstration of the accuracy and performance of your program
+-  Must use GitHub for collaborative development
+    -  Tutorial: https://gitbook.tw/
+    -  Use the Fork→Pull→Push→Pull Request→Merge workflow
+    -  Do NOT just upload the final code → must keep the development history on GitHub
+-  Students per group: 2
+    -  Inform the TA before April 26
+-  Final presentation: June 7
+    -  25 mins presentation + 10 mins questions
+    -  All students are encouraged to ask ANY questions
+-  Bonus points: Surprise Me!!!
 ## Tree Algorithm
 - Implement a tree algorithm to compute gravity in 2D
   - Compare the performance and accuracy with different cell-opening criteria
