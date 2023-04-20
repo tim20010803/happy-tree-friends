@@ -1,4 +1,8 @@
-echo "# happy-tree-friends" >> README.md
+# happy-tree-friends
+
+
+
+
 git init
 git add README.md
 git commit -m "first commit"
