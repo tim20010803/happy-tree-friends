@@ -29,3 +29,12 @@
     https://wwwmpa.mpa-garching.mpg.de/gadget/gadget2-paper.pdf
   - A hierarchical O(N log N) force-calculation algorithm:
     https://www.nature.com/articles/324446a0
+
+
+## Meeting records
+- 04/22 https://docs.google.com/document/d/1dTHicoDv07S-JrnXMipeCdmDJ7Y_S8J5LuA3QogfXHE/edit?pli=1
+
+## Other Reference
+- Barnes-Hut-Simulator
+  - GitHub code: https://github.com/beltoforion/Barnes-Hut-Simulator
+  - Article: https://beltoforion.de/en/barnes-hut-galaxy-simulator/
