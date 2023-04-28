@@ -13,7 +13,8 @@ struct particle
 
 class QuadrupleTree;
 class TreeNode{
-private:
+//private:
+public://for testing
     TreeNode *parent;
     TreeNode *NW;//initially set it point to nullptr and use it to determin if this node is leaf
     TreeNode *NE;
@@ -21,25 +22,25 @@ private:
     TreeNode *SE;
     particle monople;//store the total mass and center of mass in this subtree
     int level;//zero for root
-    bool leaf;//if leaf == true then monople are the leaf of particle
-public:
+    bool leaf;//if leaf == true then monople are the leaf of Particle
+
     TreeNode():NW(0),NE(0),SW(0),SE(0),parent(0),level(0),leaf(false),monople{{0.,0.},{0.,0.},0.}{};
-    TreeNode(particle newPtcl):NW(0),NE(0),SW(0),SE(0),parent(0),level(0),leaf(true),monople(newPtcl){};
+    TreeNode(particle newPtcl):NW(0),NE(0),SW(0),SE(0),parent(0),level(0),leaf(false),monople(newPtcl){};
     void printNode(){
-        std::cout<<"parent: "<<parent<<"\n";
-        std::cout<<"children: "<<NW<<NE<<SW<<SE<<"\n";
-        std::cout<<"If this is a leaf: "<<leaf<<"\n";
-        std::cout<<"level: "<<level<<"\n";
-        std::cout<<"monople position: ("<<monople.posi[0]<<","<<monople.posi[1]<<","<<monople.posi[2]<<")\n";
-        std::cout<<"monople velocity: ("<<monople.velocity[0]<<","<<monople.velocity[1]<<","<<monople.velocity[2]<<")\n";
-        std::cout<<"monople mass: " <<monople.mass;
+        std::cout << "parent: " <<  parent <<  "\n";
+        std::cout << "children: " << NW << NE << SW << SE << "\n";
+        std::cout << "If this is a leaf: " << leaf << "\n";
+        std::cout << "level: " << level << "\n";
+        std::cout << "monople position: (" << monople.posi[0] << "," << monople.posi[1] << "," << monople.posi[2] << ")\n";
+        std::cout << "monople velocity: (" << monople.velocity[0] << "," << monople.velocity[1] << ","<<monople.velocity[2] << ")\n";
+        std::cout << "monople mass: " << monople.mass << "\n";
         };
     friend class QuadrupleTree;
 };
 
 class QuadrupleTree{
 private:
-    TreeNode *root;
+    
     float maxX{1};
     float maxY{1};
     float maxZ{1};
@@ -47,6 +48,7 @@ private:
     float minY{0};
     float minZ{0};
 public:
+    TreeNode *root;
     QuadrupleTree():root(0){};
     QuadrupleTree(particle firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ);//mX is minX, MX is maxX(boundry);
 
@@ -96,7 +98,7 @@ QuadrupleTree::QuadrupleTree(particle firstPtc,float mX,float mY,float mZ,float 
 //     return successor;
 // }
 
-// void QuadrupleTree::Construct(std::vector<particle> Particles){
+// void QuadrupleTree::Construct(std::vector<Particle> Particles){
 //     std::queue<TreeNode*> q;         // create a queue to handle level-roder rule
 //     TreeNode *current = root;        // point *current to root
 //     while (ss >> monople) {
@@ -120,6 +122,9 @@ QuadrupleTree::QuadrupleTree(particle firstPtc,float mX,float mY,float mZ,float 
 //         q.pop();                                      // 更新queue
 //     }
 // }
+// TreeNode* TwoParticleTree(TreeNode* ptcT1,Particle ptcT2){
+    
+// }
 void QuadrupleTree::Insert(particle newPtc){    
 
     std::queue<TreeNode*> q;
@@ -132,13 +137,13 @@ void QuadrupleTree::Insert(particle newPtc){
         {
             if (current->NW != NULL){               // current的NW有分支
                 q.push(current->NW);                // 將其推進queue中
-                current->NW->level += 1;
                 current->leaf = false;
             }
-            else{                                          // current的NW沒有分支
+            else{         // current的NW沒有分支,且current分支不是leaf(不是particle)
                 TreeNode *new_node = new TreeNode(newPtc);   // 建立新的node, 將particle放在這裡
                 new_node->parent = current;
                 new_node->level = current->level + 1;
+                new_node->leaf = true;
                 current->leaf = false;
                 current->NW = new_node;
                 
@@ -158,13 +163,12 @@ void QuadrupleTree::Insert(particle newPtc){
         {
             if (current->NE != NULL){               // current的NE有分支
                 q.push(current->NE);                // 將其推進queue中
-                current->NE->level += 1;
                 current->leaf = false;
             }
             else{                                          // current的NE沒有分支
                 TreeNode *new_node = new TreeNode(newPtc);   // 建立新的node, 將particle放在這裡
                 new_node->parent = current;
-                new_node->level = current->level + 1;
+                new_node->level = current->level +1;
                 current->leaf = false;
                 current->NE = new_node;
                 
@@ -184,7 +188,6 @@ void QuadrupleTree::Insert(particle newPtc){
         {
             if (current->SW != NULL){               // current的SW有分支
                 q.push(current->SW);                // 將其推進queue中
-                current->SW->level += 1;
                 current->leaf = false;
             }
             else{                                          // current的SW沒有分支
@@ -210,7 +213,6 @@ void QuadrupleTree::Insert(particle newPtc){
         {
             if (current->SE != NULL){               // current的SE有分支
                 q.push(current->SE);                // 將其推進queue中
-                current->SE->level += 1;
                 current->leaf = false;
             }
             else{                                          // current的SE沒有分支
@@ -246,23 +248,26 @@ void QuadrupleTree::Insert(particle newPtc){
 
 int main() {
     particle a;
-    a.posi ={1,2,1};
-    a.velocity={4,3,3};
-    a.mass={123};
-    TreeNode b = TreeNode();   
-    b.printNode();
+    a.posi = {1,6,4};
+    a.velocity = {4,3,2};
+    a.mass = {12};
+    particle b;
+    b.posi = {2,7,8};
+    b.velocity = {1,6,7};
+    b.mass = {23};
+    particle c;
+    c.posi = {3,8,8};
+    c.velocity = {1,6,7};
+    c.mass = {212};
 
-    // const char *a = "A B C D E F x x x G H x I";
-    // QuadrupleTree T(a);                // 以level-order規則建立Quadruple Tree
-    // T.Inorder_by_parent();      // 以inorder-traversal印出Quadruple Tree
-    // std::cout << std::endl;
-
-    // T.InsertLevelorder('K');
-    // T.InsertLevelorder('L');
-    // T.InsertLevelorder('M');
-    // T.InsertLevelorder('N');
-    // T.Inorder_by_parent();
-    //std::cout << std::endl;
-    //std::cout<<"hello";
+    std::vector<float>minposition = {0,0,0};
+    std::vector<float>maxposition = {5,5,5};
+    QuadrupleTree T(a,0,0,0,10,10,10);  
+    T.Insert(b);
+    T.Insert(c);
+    T.root->printNode();
+    T.root->NE->printNode();
+    T.root->NE->NE->printNode();
+    //for the first test I found level update error and deletion of old Particle
     return 0;
 }
