@@ -54,7 +54,9 @@ public:
 
     void Construct(std::vector<particle> Particles);
     void Insert(particle newPtc);
-
+    
+    TreeNode* TwoParticleSubtree(TreeNode* ptcTree1, TreeNode* ptcTree2);//use this function to constrcut classify subtree
+    
     TreeNode* leftmost(TreeNode *current);
     TreeNode* InorderSuccessor(TreeNode *current);
     void Inorder_by_parent();
