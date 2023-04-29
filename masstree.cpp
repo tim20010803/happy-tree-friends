@@ -144,7 +144,7 @@ TreeNode* TwoParticleSubtree(TreeNode* ptcTree1, Particle& ptc2,float tempminX,f
     bool secPtlE = ptc2.posi[0] > midX;
 
     TreeNode* output = new TreeNode;
-    
+    output->level = ptcTree1->level - 1;
     
     ptcTree1->level += 1;
     TreeNode* tempOut = output;
@@ -258,16 +258,25 @@ void QuadrupleTree::Insert(Particle& newPtc){
     TreeNode *current = root;
     float tempMaxX{maxX};float tempMaxY{maxY};float tempMaxZ{maxZ};
     float tempMinX{minX};float tempMinY{minY};float tempMinZ{minZ};
-    // current = TwoParticleSubtree(current, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ);
 
     while (current) {
         if (newPtc.posi[0] < ((tempMaxX + tempMinX) / 2.) and newPtc.posi[1] > ((tempMaxY + tempMinY) / 2.))
         {
-            if (current->NW != NULL){               // current的NW有分支
-                q.push(current->NW);                // 將其推進queue中
-                current->leaf = false;
+            if (current->NW != NULL ){               // current的NW有分支
+                if (current->NW->leaf == false)      //該分支不是particle
+                {
+                    q.push(current->NW);                // 將其推進queue中
+                    current->leaf = false;
+                }
+                else{                                   //current的NW已經有particle,做一棵subtree接上去
+                    current->NW = TwoParticleSubtree(current->NW, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->NW;
+                    delete [] current->NW->parent;
+                    current->NW->parent = current;
+                    break;
+                }
+                
             }
-            else{         // current的NW沒有分支,且current分支不是leaf(不是Particle)
+            else{         // current的NW沒有分支
                 TreeNode *new_node = new TreeNode(&newPtc);   // 建立新的node, 將Particle放在這裡
                 new_node->parent = current;
                 new_node->level = current->level + 1;
@@ -281,9 +290,18 @@ void QuadrupleTree::Insert(Particle& newPtc){
         }
         else if (newPtc.posi[0] >= ((tempMaxX + tempMinX) / 2.) and newPtc.posi[1] > ((tempMaxY + tempMinY) / 2.))
         {
-            if (current->NE != NULL){               // current的NE有分支
-                q.push(current->NE);                // 將其推進queue中
-                current->leaf = false;
+            if (current->NE != NULL ){               // current的NE有分支
+                if (current->NE->leaf == false)      //該分支不是particle
+                {
+                    q.push(current->NE);                // 將其推進queue中
+                    current->leaf = false;
+                }
+                else{                                   //current的NE已經有particle,做一棵subtree接上去
+                    current->NE = TwoParticleSubtree(current->NE, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->NE;
+                    delete [] current->NE->parent;
+                    current->NE->parent = current;
+                    break;
+                }
             }
             else{                                          // current的NE沒有分支
                 TreeNode *new_node = new TreeNode(&newPtc);   // 建立新的node, 將Particle放在這裡
@@ -299,9 +317,18 @@ void QuadrupleTree::Insert(Particle& newPtc){
         }
         else if (newPtc.posi[0] < ((tempMaxX + tempMinX) / 2.) and newPtc.posi[1] <= ((tempMaxY + tempMinY) / 2.))
         {
-            if (current->SW != NULL){               // current的SW有分支
-                q.push(current->SW);                // 將其推進queue中
-                current->leaf = false;
+            if (current->SW != NULL ){               // current的SW有分支
+                if (current->SW->leaf == false)      //該分支不是particle
+                {
+                    q.push(current->SW);                // 將其推進queue中
+                    current->leaf = false;
+                }
+                else{                                   //current的SW已經有particle,做一棵subtree接上去
+                    current->SW = TwoParticleSubtree(current->SW, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->SW;
+                    delete [] current->SW->parent;
+                    current->SW->parent = current;
+                    break;
+                }
             }
             else{                                          // current的SW沒有分支
                 TreeNode *new_node = new TreeNode(&newPtc);   // 建立新的node, 將Particle放在這裡
@@ -317,9 +344,18 @@ void QuadrupleTree::Insert(Particle& newPtc){
         }
         else if (newPtc.posi[0] >= ((tempMaxX + tempMinX) / 2.) and newPtc.posi[1] <= ((tempMaxY + tempMinY) / 2.))
         {
-            if (current->SE != NULL){               // current的SE有分支
-                q.push(current->SE);                // 將其推進queue中
-                current->leaf = false;
+            if (current->SE != NULL ){               // current的SE有分支且該分支不是particle
+                if (current->SE->leaf == false)      //該分支不是particle
+                {
+                    q.push(current->SE);                // 將其推進queue中
+                    current->leaf = false;
+                }
+                else{                                   //current的SE已經有particle,做一棵subtree接上去
+                    current->SE = TwoParticleSubtree(current->SE, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->SE;
+                    delete [] current->SE->parent;
+                    current->SE->parent = current;
+                    break;
+                }
             }
             else{                                          // current的SE沒有分支
                 TreeNode *new_node = new TreeNode(&newPtc);   // 建立新的node, 將Particle放在這裡
@@ -351,13 +387,17 @@ int main() {
     a.velocity = {4.,3.,2.};
     a.mass = {12.};
     Particle b;
-    b.posi = {6.,7.,8.};
+    b.posi = {2.,7.,8.};
     b.velocity = {1.,6.,7.};
     b.mass = {23.};
     Particle c;
-    c.posi = {3.,8.,8.};
+    c.posi = {3.,5.,8.};
     c.velocity = {1.,6.,7.};
     c.mass = {212.};
+    Particle d;
+    d.posi = {4.,6.,8.};
+    d.velocity = {8.,6.,7.};
+    d.mass = {62.};
     // TreeNode* AnodePtr = new TreeNode (&a);
     // TreeNode* BnodePtr = new TreeNode (&b);
     // TreeNode* CnodePtr = new TreeNode (&c);
@@ -398,12 +438,22 @@ int main() {
     
     
     QuadrupleTree T(a,0.,0.,0.,10.,10.,10.); 
-    T.root->printNode();
-    T.root->NW->printNode();
+
+
     T.Insert(b);
+    T.Insert(c);
+    T.Insert(d);
     T.root->printNode();
-    T.root->NE->printNode();
+    T.root->SW->printNode();
     T.root->NW->printNode();
+    T.root->NW->SE->printNode();
+    T.root->NW->SW->printNode();
+    T.root->NW->SW->SW->printNode();
+    T.root->NW->SW->NE->printNode();
+    // T.root->NE->printNode();
+    // T.root->SW->printNode();
+    
+    // T.root->printNode();
     // T.root->NE->NE->printNode();
 
     //for the first test I found level update error and deletion of old Particle
