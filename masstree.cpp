@@ -59,7 +59,7 @@ public:
     QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,float mZ,float MX,float MY, float MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
     ~QuadrupleTree(){delete []root;};                     // desturctor (to destroy the whole tree and release the memory space it takes)
     void Insert(Particle& newPtc);                        // insert one particle in the tree
-    float Monople[4](TreeNode *subtreeNode);              // total mass and center of mass of this subtree: (mass, x, y, z) (not done yet)
+    float *Monople(TreeNode *subtreeNode);              // total mass and center of mass of this subtree: (mass, x, y, z) (not done yet)
 };
 QuadrupleTree::QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ){                 
     root = new TreeNode;                                  // allocate memory for root
