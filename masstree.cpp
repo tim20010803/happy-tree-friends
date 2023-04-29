@@ -47,13 +47,13 @@ public://for testing
 
 class QuadrupleTree{
 private:
-    
     float maxX{1};
     float maxY{1};
     float maxZ{1};
     float minX{0};
     float minY{0};
     float minZ{0};
+    TreeNode* TwoParticleSubtree(TreeNode* ptcTree1, Particle& ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ);
 public:
     TreeNode *root;
     QuadrupleTree():root(0){};
@@ -129,11 +129,9 @@ QuadrupleTree::QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float
 //         q.pop();                                      // 更新queue
 //     }
 // }
-// TreeNode* TwoParticleTree(TreeNode* ptcT1,Particle ptcT2){
-    
-// }
 
-TreeNode* TwoParticleSubtree(TreeNode* ptcTree1, Particle& ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ){
+
+TreeNode* QuadrupleTree::TwoParticleSubtree(TreeNode* ptcTree1, Particle& ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ){
     float mX = tempminX;float mY = tempminY;float mZ = tempminZ;//rename new boundary and cut it into four subregion
     float MX = tempmaxX;float MY = tempmaxY;float MZ = tempmaxZ;
     float midX = (mX + MX)/2.;float midY = (mY + MY)/2.;float midZ = (mZ + MZ)/2.;
