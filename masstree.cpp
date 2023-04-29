@@ -68,10 +68,10 @@ public:
 };
 QuadrupleTree::QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ){//mX is minX, MX is maxX(boundry);
     root = new TreeNode;           // allocate memory for root
-    root->monoplePtr = &firstPtc;      // assign character to root
-    root->leaf = true;             // label this node as leaf (without subnode in it)
-    float maxX{MX};float maxY{MY};float maxZ{MZ};
-    float minX{mX};float minY{mY};float minZ{mZ};
+    maxX = MX; maxY = MY; maxZ = MZ; 
+    minX = mX; minY = mY; minZ = mZ; 
+    Insert(firstPtc);
+
 }
 
 // C++ code
@@ -399,9 +399,12 @@ int main() {
     
     QuadrupleTree T(a,0.,0.,0.,10.,10.,10.); 
     T.root->printNode();
+    T.root->NW->printNode();
     T.Insert(b);
     T.root->printNode();
     T.root->NE->printNode();
+    T.root->NW->printNode();
+    // T.root->NE->NE->printNode();
 
     //for the first test I found level update error and deletion of old Particle
     return 0;
