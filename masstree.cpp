@@ -25,17 +25,17 @@ public://for testing
     bool leaf;//if leaf == true then monople are the leaf of Particle
 
     TreeNode():NW(0),NE(0),SW(0),SE(0),parent(0),level(0),leaf(false),monople{{0.,0.},{0.,0.},0.}{};
-    TreeNode(particle newPtcl):NW(0),NE(0),SW(0),SE(0),parent(0),level(0),leaf(false),monople(newPtcl){};
+    TreeNode(particle newPtcl):NW(0),NE(0),SW(0),SE(0),parent(0),level(0),leaf(true),monople(newPtcl){};
     void printNode(){
         std::cout << "parent: " <<  parent <<  "\n";
-        std::cout << "children: " << NW << NE << SW << SE << "\n";
+        std::cout << "children: " <<"NW:"<< NW <<"NE:"<< NE <<"SW:"<< SW <<"SE:"<< SE << "\n";
         std::cout << "If this is a leaf: " << leaf << "\n";
         std::cout << "level: " << level << "\n";
         std::cout << "monople position: (" << monople.posi[0] << "," << monople.posi[1] << "," << monople.posi[2] << ")\n";
         std::cout << "monople velocity: (" << monople.velocity[0] << "," << monople.velocity[1] << ","<<monople.velocity[2] << ")\n";
-        std::cout << "monople mass: " << monople.mass << "\n";
+        std::cout << "monople mass: " << monople.mass << "\n\n";
         };
-    friend class QuadrupleTree;
+        friend class QuadrupleTree;
 };
 
 class QuadrupleTree{
@@ -55,8 +55,6 @@ public:
     void Construct(std::vector<particle> Particles);
     void Insert(particle newPtc);
     
-    TreeNode* TwoParticleSubtree(TreeNode* ptcTree1, particle ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ);//use this function to construct classify subtree
-    //first particle has connected to the parent. first and second particle can't exchange, otherwise levels of new subtree will be wrong.
     TreeNode* leftmost(TreeNode *current);
     TreeNode* InorderSuccessor(TreeNode *current);
     void Inorder_by_parent();
@@ -128,7 +126,7 @@ QuadrupleTree::QuadrupleTree(particle firstPtc,float mX,float mY,float mZ,float 
     
 // }
 
-TreeNode* QuadrupleTree::TwoParticleSubtree(TreeNode* ptcTree1, particle ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ){
+TreeNode* TwoParticleSubtree(TreeNode* ptcTree1, particle ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ){
     float mX = tempminX;float mY = tempminY;float mZ = tempminZ;//rename new boundary and cut it into four subregion
     float MX = tempmaxX;float MY = tempmaxY;float MZ = tempmaxZ;
     float midX = (mX + MX)/2.;float midY = (mY + MY)/2.;float midZ = (mZ + MZ)/2.;
@@ -148,79 +146,113 @@ TreeNode* QuadrupleTree::TwoParticleSubtree(TreeNode* ptcTree1, particle ptc2,fl
         output->monople.posi[i] /= output->monople.mass;
     }
     ptcTree1->level += 1;
+    TreeNode* tempOut = output;
+    while (true)
+    {
+        if ( (firstPtlE == secPtlE) and (firstPtlN == secPtlN)){
+            std::cout <<"in the same category\n";
+            tempOut->printNode();
+            tempOut->leaf = false;
+
+            if (firstPtlE and firstPtlN){
+                mX = midX;
+                mY = midY;
+                tempOut->NE = new TreeNode(tempOut->monople);
+                tempOut->NE->parent = tempOut;
+                tempOut->NE->level = tempOut->level + 1;
+                tempOut = tempOut->NE;
+            }
+            else if (firstPtlE == false and firstPtlN){
+                MX = midX;
+                mY = midY;
+                tempOut->NW = new TreeNode(tempOut->monople);
+                tempOut->NW->parent = tempOut;
+                tempOut->NW->level = tempOut->level + 1;
+                tempOut = tempOut->NW;
+            }
+            else if (firstPtlE and firstPtlN  == false){
+                mX = midX;
+                MY = midY;
+                tempOut->SE = new TreeNode(tempOut->monople);
+                tempOut->SE->parent = tempOut;
+                tempOut->SE->level = tempOut->level + 1;
+                tempOut = tempOut->SE;
+            }
+            else if (firstPtlE == false and firstPtlN == false){
+                MX = midX;
+                MY = midY;
+                tempOut->SW = new TreeNode(tempOut->monople);
+                tempOut->SW->parent = tempOut;
+                tempOut->SW->level = tempOut->level + 1;
+                tempOut = tempOut->SW;
+            }
+            midX = (mX + MX)/2.; midY = (mY + MY)/2.; midZ = (mZ + MZ)/2.;
+            firstPtlN = ptcTree1->monople.posi[1] > midY;//determin each particle in which part of subregion
+            firstPtlE = ptcTree1->monople.posi[0] > midX;
+            secPtlN = ptc2.posi[1] > midY;
+            secPtlE = ptc2.posi[0] > midX;
+
+        }
+        else{//two particle are not in the same category
+            //connect ptcTree1 to tempOut
+            std::cout <<"not in the same category\n";
+            if (firstPtlE and firstPtlN){
+                tempOut->NE = ptcTree1;
+                ptcTree1->parent = tempOut;
+                ptcTree1->level = tempOut->level +1;
+            }
+            else if (firstPtlE == false and firstPtlN){
+                tempOut->NW = ptcTree1;
+                ptcTree1->parent = tempOut;
+                ptcTree1->level = tempOut->level +1;
+            }
+            else if (firstPtlE and firstPtlN  == false){
+                tempOut->SE = ptcTree1;
+                ptcTree1->parent = tempOut;
+                ptcTree1->level = tempOut->level +1;
+
+            }
+            else if (firstPtlE == false and firstPtlN == false){
+                tempOut->SW = ptcTree1;
+                ptcTree1->parent = tempOut;
+                ptcTree1->level = tempOut->level +1;
+            }
+            //creat node for second paticle and connect it to tempOut
+            if (secPtlE and secPtlN){
+                tempOut->NE = new TreeNode(ptc2);
+                tempOut->NE->parent = tempOut;
+                tempOut->NE->level = tempOut->level + 1;
+                tempOut->NE->leaf = true;
+            }
+            else if (secPtlE == false and secPtlN){
+                tempOut->NW = new TreeNode(ptc2);
+                tempOut->NW->parent = tempOut;
+                tempOut->NW->level = tempOut->level + 1;
+                tempOut->NW->leaf = true;
+            }
+            else if (secPtlE and secPtlN  == false){
+                tempOut->SE = new TreeNode(ptc2);
+                tempOut->SE->parent = tempOut;
+                tempOut->SE->level = tempOut->level + 1;
+                tempOut->SE->leaf = true;
+
+            }
+            else if (secPtlE == false and secPtlN == false){
+                tempOut->SW = new TreeNode(ptc2);
+                tempOut->SW->parent = tempOut;
+                tempOut->SW->level = tempOut->level + 1;
+                tempOut->SW->leaf = true;
+            }
+            tempOut->printNode();
+            break;
+        }
+    }
     
-
-    if ( (firstPtlE == secPtlE) and (firstPtlN == secPtlN)){
-        if (firstPtlE and firstPtlN){
-            output->NE = TwoParticleSubtree(ptcTree1,ptc2,mX,mY,mZ,MX,MY,MZ);
-            mX = midX;
-            mY = midY;
-        }
-        else if (firstPtlE == false and firstPtlN){
-            output->NW = TwoParticleSubtree(ptcTree1,ptc2,mX,mY,mZ,MX,MY,MZ);
-            MX = midX;
-            mY = midY;
-        }
-        else if (firstPtlE and firstPtlN  == false){
-            output->SE = TwoParticleSubtree(ptcTree1,ptc2,mX,mY,mZ,MX,MY,MZ);
-            mX = midX;
-            MY = midY;
-        }
-        else if (firstPtlE == false and firstPtlN == false){
-            output->SW = TwoParticleSubtree(ptcTree1,ptc2,mX,mY,mZ,MX,MY,MZ);
-            MX = midX;
-            MY = midY;
-        }
-        
-    }
-    else{//two particle are not in the same category
-        //connect ptcTree1 to output
-        if (firstPtlE and firstPtlN){
-            output->NE = ptcTree1;
-        }
-        else if (firstPtlE == false and firstPtlN){
-            output->NW = ptcTree1;
-        }
-        else if (firstPtlE and firstPtlN  == false){
-            output->SE = ptcTree1;
-
-        }
-        else if (firstPtlE == false and firstPtlN == false){
-            output->SW = ptcTree1;
-        }
-        //creat node for second paticle and connect it to output
-        if (secPtlE and secPtlN){
-            output->NE = new TreeNode(ptc2);
-            output->NE->parent = output;
-            output->NE->level = output->level + 1;
-            output->NE->leaf = true;
-        }
-        else if (secPtlE == false and secPtlN){
-            output->NW = new TreeNode(ptc2);
-            output->NW->parent = output;
-            output->NW->level = output->level + 1;
-            output->NW->leaf = true;
-        }
-        else if (secPtlE and secPtlN  == false){
-            output->SE = new TreeNode(ptc2);
-            output->SE->parent = output;
-            output->SE->level = output->level + 1;
-            output->SE->leaf = true;
-
-        }
-        else if (secPtlE == false and secPtlN == false){
-            output->SW = new TreeNode(ptc2);
-            output->SW->parent = output;
-            output->SW->level = output->level + 1;
-            output->SW->leaf = true;
-
-        }
-
- 
-    }
+    
     return output;
     
 }
+
 void QuadrupleTree::Insert(particle newPtc){    
 
     std::queue<TreeNode*> q;
@@ -234,9 +266,6 @@ void QuadrupleTree::Insert(particle newPtc){
             if (current->NW != NULL){               // current的NW有分支
                 q.push(current->NW);                // 將其推進queue中
                 current->leaf = false;
-            }
-            else if (current->NW->leaf){
-                current->NW = TwoParticleSubtree(current->NW,newPtc,tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ);
             }
             else{         // current的NW沒有分支,且current分支不是leaf(不是particle)
                 TreeNode *new_node = new TreeNode(newPtc);   // 建立新的node, 將particle放在這裡
@@ -358,13 +387,50 @@ int main() {
     c.posi = {3.,8.,8.};
     c.velocity = {1.,6.,7.};
     c.mass = {212.};
+    TreeNode* AnodePtr = new TreeNode (a);
+    TreeNode* BnodePtr = new TreeNode (b);
+    TreeNode* CnodePtr = new TreeNode (c);
+    // AnodePtr->printNode();
 
 
-    QuadrupleTree T(a,0.,0.,0.,10.,10.,10.); 
-    T.root->printNode();
-    T.Insert(b);
-    T.root->printNode();
-    T.root->NW->printNode();
+
+    TreeNode* BinA = TwoParticleSubtree(AnodePtr,b,0.,0.,0.,10.,10.,10.);
+    std::cout<<"\n\n" ;
+    if (BinA != NULL)
+    {
+    BinA->printNode();
+        if (BinA->SE != NULL)
+        {
+            std::cout <<"SE:\n";
+            BinA->SE->printNode();
+        }
+        if (BinA->NE != NULL)
+        {
+            std::cout <<"NE:\n";
+            BinA->NE->printNode();
+        }
+        if (BinA->SW != NULL)
+        {
+            std::cout <<"SW:\n";
+            BinA->SW->printNode();
+        }
+        if (BinA->NW != NULL)
+        {
+            std::cout <<"NW:\n";
+            BinA->NW->printNode();
+            BinA->NW->SW->printNode();
+            BinA->NW->SW->NE->printNode();
+            BinA->NW->SW->SW->printNode();
+        }
+
+    }
+    
+    
+    // QuadrupleTree T(a,0.,0.,0.,10.,10.,10.); 
+    // T.root->printNode();
+    // T.Insert(b);
+    // T.root->printNode();
+    // T.root->NW->printNode();
 
     //for the first test I found level update error and deletion of old Particle
     return 0;
