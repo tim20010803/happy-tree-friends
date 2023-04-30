@@ -57,9 +57,11 @@ public:
     QuadrupleTree():root(NULL){};
     QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
     QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,float mZ,float MX,float MY, float MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
-    ~QuadrupleTree(){delete []root;};                     // desturctor (to destroy the whole tree and release the memory space it takes)
+    ~QuadrupleTree(){DeleteNode(root);};                  // desturctor (to destroy the whole tree and release the memory space it takes)
+    void DeleteNode(TreeNode *Node);                      // delete the Node and its all desendent
     void Insert(Particle& newPtc);                        // insert one particle in the tree
-    float *Monople(TreeNode *subtreeNode);              // total mass and center of mass of this subtree: (mass, x, y, z) (not done yet)
+    void Trim(TreeNode *Node);                            // delete all empty subnodes and itself if the input node turn out to be a empty (those node without any child and not a particle node)
+    float *Monople(TreeNode *subtreeNode);                // total mass and center of mass of this subtree: (mass, x, y, z) (not done yet)
 };
 QuadrupleTree::QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ){                 
     root = new TreeNode;                                  // allocate memory for root
@@ -303,6 +305,43 @@ void QuadrupleTree::Insert(Particle& newPtc){
 }
 
 
+void QuadrupleTree::DeleteNode(TreeNode *Node){
+    if(Node != root){           // cut the pointer (which is point to self from its parent)
+        if(Node->parent->NE == Node){Node->parent->NE = NULL;};
+        if(Node->parent->NW == Node){Node->parent->NW = NULL;};
+        if(Node->parent->SE == Node){Node->parent->SE = NULL;};
+        if(Node->parent->SW == Node){Node->parent->SW = NULL;};
+    }
+    if (Node->leaf){            // if the node is a particle node, disconnect to particle and delete self
+        Node->ptclPtr = NULL;
+        delete[] Node;
+        return;
+    }
+    else{                       // delete all the children
+        if(Node->NE != NULL){DeleteNode(Node->NE); Node->NE = NULL;};
+        if(Node->NW != NULL){DeleteNode(Node->NW); Node->NW = NULL;};
+        if(Node->SE != NULL){DeleteNode(Node->SE); Node->SE = NULL;};
+        if(Node->SW != NULL){DeleteNode(Node->SW); Node->SW = NULL;};
+        delete[] Node;
+        return;
+    }
+}
+void QuadrupleTree::Trim(TreeNode *Node){
+    if(Node->leaf){return;}            //if this node is a particle return
+    if((Node->leaf == false and Node->NE == NULL) and (Node->NW == NULL) and (Node->SE == NULL) and (Node->SW == NULL)){
+        DeleteNode(Node);
+        return;
+    }
+    else if(Node->leaf == false){      // trim all the children
+        if(Node->NE != NULL){Trim(Node->NE);};
+        if(Node->NW != NULL){Trim(Node->NW);};
+        if(Node->SE != NULL){Trim(Node->SE);};
+        if(Node->SW != NULL){Trim(Node->SW);};
+        Trim(Node);
+        return;
+    }
+}
+
 
 
 
@@ -390,7 +429,9 @@ int main() {
     T.root->NW->PrintNode();
     T.root->NW->SE->PrintNode();
     T.root->NW->SW->PrintNode();
-    T.root->NW->SW->SW->PrintNode();
-    T.root->NW->SW->NE->PrintNode();
+    // T.root->NW->PrintNode();
+    // T.root->NW->SW->PrintNode();
+    // T.root->NW->SW->SW->PrintNode();
+    // T.root->NW->SW->NE->PrintNode();
     return 0;
 }
