@@ -1,9 +1,7 @@
 // C++ code
 #include <iostream>
-#include <sstream>
 #include <queue>
 #include <vector>
-#include <string>
 struct Particle{
     std::vector<float> posi;
     std::vector<float> velocity;
