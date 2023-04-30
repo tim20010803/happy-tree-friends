@@ -55,7 +55,7 @@ public:
     QuadrupleTree():root(NULL){};
     QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
     QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,float mZ,float MX,float MY, float MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
-    ~QuadrupleTree(){DeleteNode(root);};                  // desturctor (to destroy the whole tree and release the memory space it takes)
+    ~QuadrupleTree();                  // desturctor (to destroy the whole tree and release the memory space it takes)
     void DeleteNode(TreeNode *Node);                      // delete the Node and its all desendent
     void Insert(Particle& newPtc);                        // insert one particle in the tree
     void Trim(TreeNode *Node);                            // delete all empty subnodes and itself if the input node turn out to be a empty (those node without any child and not a particle node)
@@ -73,6 +73,15 @@ QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,
     minX = mX; minY = mY; minZ = mZ; 
     for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
         Insert(Particles[i]);
+    }
+}
+QuadrupleTree::~QuadrupleTree(){
+    if (root != NULL){
+        if(root->NE != NULL){DeleteNode(root->NE); root->NE = NULL;};
+        if(root->NW != NULL){DeleteNode(root->NW); root->NW = NULL;};
+        if(root->SE != NULL){DeleteNode(root->SE); root->SE = NULL;};
+        if(root->SW != NULL){DeleteNode(root->SW); root->SW = NULL;};
+        // delete root;
     }
 }
 
@@ -302,6 +311,7 @@ void QuadrupleTree::Insert(Particle& newPtc){
     }
 }
 void QuadrupleTree::DeleteNode(TreeNode *Node){
+    // if(Node == root){std::cout<<"Tree root can't be deleted by this function. Use the destructor of Tree instead.";return;}
     if(Node != root){           // cut the pointer (which is point to self from its parent)
         if(Node->parent->NE == Node){Node->parent->NE = NULL;};
         if(Node->parent->NW == Node){Node->parent->NW = NULL;};
@@ -310,15 +320,15 @@ void QuadrupleTree::DeleteNode(TreeNode *Node){
     }
     if (Node->leaf){            // if the node is a particle node, disconnect to particle and delete self
         Node->ptclPtr = NULL;
-        delete[] Node;
+        delete Node;
         return;
     }
     else{                       // delete all the children
-        if(Node->NE != NULL){DeleteNode(Node->NE); Node->NE = NULL;};
-        if(Node->NW != NULL){DeleteNode(Node->NW); Node->NW = NULL;};
-        if(Node->SE != NULL){DeleteNode(Node->SE); Node->SE = NULL;};
-        if(Node->SW != NULL){DeleteNode(Node->SW); Node->SW = NULL;};
-        delete[] Node;
+        if(Node->NE != NULL){DeleteNode(Node->NE);};
+        if(Node->NW != NULL){DeleteNode(Node->NW);};
+        if(Node->SE != NULL){DeleteNode(Node->SE);};
+        if(Node->SW != NULL){DeleteNode(Node->SW);};
+        delete Node;
         return;
     }
 }
@@ -477,10 +487,9 @@ int main() {
     T.root->NW->SW->PrintNode();
     T.root->NW->SW->SW->PrintNode();
     T.root->NW->SW->NE->PrintNode();
-    float *mono = T.Monople(T.root->NW);
-    std::cout << *mono << "\n";
-    std::cout << *(mono+1)<< "\n";
-    std::cout << *(mono+2)<< "\n";
-    std::cout << *(mono+3)<< "\n";
+    // T.DeleteNode(T.root->SW);
+    // T.DeleteNode(T.root->NW);
+    T.root->PrintNode();
+    // T.DeleteNode(T.root);
     return 0;
 }
