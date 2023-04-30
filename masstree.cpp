@@ -44,7 +44,6 @@ public:                                // set all of parameter be public for tes
 
 class QuadrupleTree{
 private:
-
     float minX{0};float minY{0};float minZ{0}; // the boundary of space (minimum and maximum of x,y,z of all particles)
     float maxX{1};float maxY{1};float maxZ{1};
     TreeNode *TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ); 
@@ -52,7 +51,6 @@ private:
     // if a particle in the same region of existing particle in a node 
     // in the original level of first particle
 public:
-
     TreeNode *root;
     QuadrupleTree():root(NULL){};
     QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
@@ -61,7 +59,7 @@ public:
     void DeleteNode(TreeNode *Node);                      // delete the Node and its all desendent
     void Insert(Particle& newPtc);                        // insert one particle in the tree
     void Trim(TreeNode *Node);                            // delete all empty subnodes and itself if the input node turn out to be a empty (those node without any child and not a particle node)
-    float *Monople(TreeNode *subtreeNode);                // total mass and center of mass of this subtree: (mass, x, y, z) (not done yet)
+    float *Monople(TreeNode *Node);                       // total mass and center of mass of this subtree: (mass, x, y, z) (not done yet)
 };
 QuadrupleTree::QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ){                 
     root = new TreeNode;                                  // allocate memory for root
@@ -303,8 +301,6 @@ void QuadrupleTree::Insert(Particle& newPtc){
         q.pop();
     }
 }
-
-
 void QuadrupleTree::DeleteNode(TreeNode *Node){
     if(Node != root){           // cut the pointer (which is point to self from its parent)
         if(Node->parent->NE == Node){Node->parent->NE = NULL;};
@@ -327,7 +323,7 @@ void QuadrupleTree::DeleteNode(TreeNode *Node){
     }
 }
 void QuadrupleTree::Trim(TreeNode *Node){
-    if(Node->leaf){return;}            //if this node is a particle return
+    if(Node->leaf){return;}            // if this node is a particle return
     if((Node->leaf == false and Node->NE == NULL) and (Node->NW == NULL) and (Node->SE == NULL) and (Node->SW == NULL)){
         DeleteNode(Node);
         return;
@@ -340,6 +336,56 @@ void QuadrupleTree::Trim(TreeNode *Node){
         Trim(Node);
         return;
     }
+}
+float *QuadrupleTree::Monople(TreeNode *Node){
+    float *monoParaPtr = new float;     // {mass, x, y, z}
+    for (int i = 0; i < 3; i++){        // initialize the value which pointer point to
+        *(monoParaPtr + i)= 0.;        
+    }
+    if (Node->leaf == true){            // if this is a leaf(particle node) output the particle
+        *monoParaPtr = Node->ptclPtr->mass;
+        *(monoParaPtr + 1) = Node->ptclPtr->posi[0];
+        *(monoParaPtr + 2) = Node->ptclPtr->posi[1];
+        // *(monoParaPtr + 3) = Node->ptclPtr->posi[2]; // for z direction 
+    }
+    else{                               // if this node has children then compute the monople of children
+        if(Node->NE != NULL){
+            float *monoNEptr = Monople(Node->NE);
+            *monoParaPtr += *monoNEptr;
+            *(monoParaPtr + 1) += *(monoNEptr + 1) * (*monoNEptr); // add center of mass times mass  
+            *(monoParaPtr + 2) += *(monoNEptr + 2) * (*monoNEptr); // add center of mass times mass  
+            // *(monoParaPtr + 3) += *(monoNEptr + 3) * (*monoNEptr); // add center of mass times mass  
+            delete[] monoNEptr;
+        }
+        if(Node->NW != NULL){
+            float *monoNWptr = Monople(Node->NW);
+            *monoParaPtr += *monoNWptr;
+            *(monoParaPtr + 1) += *(monoNWptr + 1) * (*monoNWptr); // add center of mass times mass  
+            *(monoParaPtr + 2) += *(monoNWptr + 2) * (*monoNWptr); // add center of mass times mass  
+            // *(monoParaPtr + 3) += *(monoNWptr + 3) * (*monoNWptr); // add center of mass times mass  
+            delete[] monoNWptr;
+        }
+        if(Node->SE != NULL){
+            float *monoSEptr = Monople(Node->SE);
+            *monoParaPtr += *monoSEptr;
+            *(monoParaPtr + 1) += *(monoSEptr + 1) * (*monoSEptr); // add center of mass times mass  
+            *(monoParaPtr + 2) += *(monoSEptr + 2) * (*monoSEptr); // add center of mass times mass  
+            // *(monoParaPtr + 3) += *(monoSEptr + 3) * (*monoSEptr); // add center of mass times mass  
+            delete[] monoSEptr;
+        }
+        if(Node->SW != NULL){
+            float *monoSWptr = Monople(Node->SW);
+            *monoParaPtr += *monoSWptr;
+            *(monoParaPtr + 1) += *(monoSWptr + 1) * (*monoSWptr); // add center of mass times mass  
+            *(monoParaPtr + 2) += *(monoSWptr + 2) * (*monoSWptr); // add center of mass times mass  
+            // *(monoParaPtr + 3) += *(monoSWptr + 3) * (*monoSWptr); // add center of mass times mass  
+            delete[] monoSWptr;
+        }
+        for (int i = 1; i < 3; i++){        // normalize center of mass with total mass
+            *(monoParaPtr + i) /= (*monoParaPtr);        
+        }
+    }
+    return monoParaPtr;
 }
 
 
@@ -421,7 +467,7 @@ int main() {
     // T.root->NW->SW->NE->PrintNode();
     std::vector<Particle> Pvec = {a,b,c,d};
     QuadrupleTree T(Pvec,0.,0.,0.,10.,10.,10.); 
-
+    
 
 
     T.root->PrintNode();
@@ -429,9 +475,12 @@ int main() {
     T.root->NW->PrintNode();
     T.root->NW->SE->PrintNode();
     T.root->NW->SW->PrintNode();
-    // T.root->NW->PrintNode();
-    // T.root->NW->SW->PrintNode();
-    // T.root->NW->SW->SW->PrintNode();
-    // T.root->NW->SW->NE->PrintNode();
+    T.root->NW->SW->SW->PrintNode();
+    T.root->NW->SW->NE->PrintNode();
+    float *mono = T.Monople(T.root->NW);
+    std::cout << *mono << "\n";
+    std::cout << *(mono+1)<< "\n";
+    std::cout << *(mono+2)<< "\n";
+    std::cout << *(mono+3)<< "\n";
     return 0;
 }
