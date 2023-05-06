@@ -32,7 +32,7 @@
 
 
 ## Meeting records
-- 04/22 https://docs.google.com/document/d/1dTHicoDv07S-JrnXMipeCdmDJ7Y_S8J5LuA3QogfXHE/edit?pli=1
+- https://docs.google.com/document/d/1dTHicoDv07S-JrnXMipeCdmDJ7Y_S8J5LuA3QogfXHE/edit?pli=1
 
 ## Other Reference
 - Barnes-Hut-Simulator
