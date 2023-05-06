@@ -69,39 +69,46 @@ float calculate_system_energy(const std::vector<Particle>& particles, float G) {
 }
 
 
-void perform_rk45_step(std::vector<Particle>& particles, float G, float dt) {
-    // Define coefficients for RK45
-    std::vector<float> a = {0.0, 1.0/4.0, 3.0/8.0, 12.0/13.0, 1.0, 1.0/2.0};
-    std::vector<float> b = {25.0/216.0, 0.0, 1408.0/2565.0, 2197.0/4104.0, -1.0/5.0, 0.0};
-    std::vector<float> c = {1.0/360.0, 0.0, -128.0/4275.0, -2197.0/75240.0, 1.0/50.0, 2.0/55.0};
-
-    // Perform RK45 step
-    std::vector<Particle> orig_particles = particles;
-    std::vector<std::vector<float>> k(6, std::vector<float>(4*particles.size()));
-    for (int i = 0; i < 6; i++) {
-        particles = orig_particles;
-        for (int j = 0; j < particles.size(); j++) {
-            particles[j].posi[0] += a[i]*dt*particles[j].velocity[0];
-            particles[j].posi[1] += a[i]*dt*particles[j].velocity[1];
-            particles[j].velocity[0] += a[i]*dt*particles[j].acceleration[0];
-            particles[j].velocity[1] += a[i]*dt*particles[j].acceleration[1];
-        }
+void RK4(std::vector<Particle>& particles, float G, float dt) {
+    for (auto& p : particles) {
         calculate_gravity(particles, G);
-        for (int j = 0; j < particles.size(); j++) {
-            k[i][j] = particles[j].velocity[0];
-            k[i][j+particles.size()] = particles[j].velocity[1];
-            k[i][j+2*particles.size()] = particles[j].acceleration[0];
-            k[i][j+3*particles.size()] = particles[j].acceleration[1];
+        // Get the current velocity and acceleration of the particle
+        std::vector<float> current_velocity = p.velocity;
+        std::vector<float> current_acceleration = p.acceleration;
+
+        // Calculate the k1 values for velocity and position
+        std::vector<float> k1_velocity = current_acceleration;
+        std::vector<float> k1_position = current_velocity;
+
+        // Calculate the k2 values for velocity and position
+        std::vector<float> k2_velocity(p.velocity.size());
+        std::vector<float> k2_position(p.posi.size());
+        for (size_t i = 0; i < p.posi.size(); i++) {
+            k2_velocity[i] = current_acceleration[i] + 0.5 * dt * k1_velocity[i];
+            k2_position[i] = current_velocity[i] + 0.5 * dt * k1_position[i];
         }
-    }
-    // Calculate new particle positions and velocities
-    for (int i = 0; i < particles.size(); i++) {
-        particles[i].posi[0] += dt*(b[0]*k[0][i] + b[1]*k[1][i] + b[2]*k[2][i] + b[3]*k[3][i] + b[4]*k[4][i] + b[5]*k[5][i]);
-        particles[i].posi[1] += dt*(b[0]*k[0][i+particles.size()] + b[1]*k[1][i+particles.size()] + b[2]*k[2][i+particles.size()] + b[3]*k[3][i+particles.size()] + b[4]*k[4][i+particles.size()] + b[5]*k[5][i+particles.size()]);
-        particles[i].velocity[0] += dt*(c[0]*k[0][i+2*particles.size()] + c[1]*k[1][i+2*particles.size()] + c[2]*k[2][i+2*particles.size()] + c[3]*k[3][i+2*particles.size()] + c[4]*k[4][i+2*particles.size()] + c[5]*k[5][i+2*particles.size()]);
-        particles[i].velocity[1] += dt*(c[0]*k[0][i+3*particles.size()] + c[1]*k[1][i+3*particles.size()] + c[2]*k[2][i+3*particles.size()] + c[3]*k[3][i+3*particles.size()] + c[4]*k[4][i+3*particles.size()] + c[5]*k[5][i+3*particles.size()]);
-        particles[i].acceleration[0] += dt*(c[0]*k[0][i+4*particles.size()] + c[1]*k[1][i+4*particles.size()] + c[2]*k[2][i+4*particles.size()] + c[3]*k[3][i+4*particles.size()] + c[4]*k[4][i+4*particles.size()] + c[5]*k[5][i+4*particles.size()]);
-        particles[i].acceleration[1] += dt*(c[0]*k[0][i+5*particles.size()] + c[1]*k[1][i+5*particles.size()] + c[2]*k[2][i+5*particles.size()] + c[3]*k[3][i+5*particles.size()] + c[4]*k[4][i+5*particles.size()] + c[5]*k[5][i+5*particles.size()]);
+
+        // Calculate the k3 values for velocity and position
+        std::vector<float> k3_velocity(p.velocity.size());
+        std::vector<float> k3_position(p.posi.size());
+        for (size_t i = 0; i < p.posi.size(); i++) {
+            k3_velocity[i] = current_acceleration[i] + 0.5 * dt * k2_velocity[i];
+            k3_position[i] = current_velocity[i] + 0.5 * dt * k2_position[i];
+        }
+
+        // Calculate the k4 values for velocity and position
+        std::vector<float> k4_velocity(p.velocity.size());
+        std::vector<float> k4_position(p.posi.size());
+        for (size_t i = 0; i < p.posi.size(); i++) {
+            k4_velocity[i] = current_acceleration[i] + dt * k3_velocity[i];
+            k4_position[i] = current_velocity[i] + dt * k3_position[i];
+        }
+
+        // Update the particle's position and velocity using the k values
+        for (size_t i = 0; i < p.posi.size(); i++) {
+            p.velocity[i] += (1.0 / 6.0) * dt * (k1_velocity[i] + 2.0 * k2_velocity[i] + 2.0 * k3_velocity[i] + k4_velocity[i]);
+            p.posi[i] += (1.0 / 6.0) * dt * (k1_position[i] + 2.0 * k2_position[i] + 2.0 * k3_position[i] + k4_position[i]);
+        }
     }
 }
 
@@ -112,16 +119,16 @@ int main() {
     const float G = 6.674e-11;
     std::vector<Particle> particles = {
         {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0},
-        {{10.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0}
+        {{1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0}
     };
 
     // Input time and time step
-    float t=1., dt=0.01;
+    float t=0.1, dt=0.01;
 
     // Perform simulation
     int num_steps = t / dt;
     for (int i = 0; i < num_steps; i++) {
-        perform_rk45_step(particles, G, dt);
+        RK4(particles, G, dt);
         std::vector<float> system_momentum = calculate_system_momentum(particles);
         float system_energy = calculate_system_energy(particles, G);
 
