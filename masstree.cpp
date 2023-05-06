@@ -487,7 +487,7 @@ void perform_rk45_step(std::vector<Particle>& particles, float G, float dt) {
 
     // Perform RK45 step
     std::vector<Particle> orig_particles = particles;
-    std::vector<std::vector<float>> k(6, std::vector<float>(particles.size()));
+    std::vector<std::vector<float>> k(6, std::vector<float>(4*particles.size()));
     for (int i = 0; i < 6; i++) {
         particles = orig_particles;
         for (int j = 0; j < particles.size(); j++) {
@@ -517,23 +517,38 @@ void perform_rk45_step(std::vector<Particle>& particles, float G, float dt) {
 
 
 // main function is for testing
+// main function is for testing
 int main() {
-    Particle a;
-    a.posi = {1.,6.};
-    a.velocity = {4.,3.};
-    a.mass = {12.};
-    Particle b;
-    b.posi = {2.,7.};
-    b.velocity = {1.,6.};
-    b.mass = {23.};
-    Particle c;
-    c.posi = {3.,5.};
-    c.velocity = {1.,6.};
-    c.mass = {212.};
-    Particle d;
-    d.posi = {4.,6.};
-    d.velocity = {8.,6.};
-    d.mass = {62.};
+    // Define simulation parameters
+    const float G = 6.674e-11;
+    std::vector<Particle> particles = {
+        {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0},
+        {{10.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0}
+    };
+
+    // Input time and time step
+    float t=1., dt=0.01;
+
+    // Perform simulation
+    int num_steps = t / dt;
+    for (int i = 0; i < num_steps; i++) {
+        perform_rk45_step(particles, G, dt);
+        std::vector<float> system_momentum = calculate_system_momentum(particles);
+        float system_energy = calculate_system_energy(particles, G);
+
+        std::cout << "Time: " << i*dt << std::endl;
+        std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
+        std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
+        std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
+        std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
+        std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
+        std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
+        std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
+        std::cout << "System energy: " << system_energy << std::endl;
+    }
+    return 0;
+
+
     // TreeNode* AnodePtr = new TreeNode (&a);
     // TreeNode* BnodePtr = new TreeNode (&b);
     // TreeNode* CnodePtr = new TreeNode (&c);
@@ -586,19 +601,19 @@ int main() {
     // T.root->NW->SW->PrintNode();
     // T.root->NW->SW->SW->PrintNode();
     // T.root->NW->SW->NE->PrintNode();
-    std::vector<Particle> Pvec = {a,b,c,d};
-    QuadrupleTree T(Pvec,0.,0.,0.,10.,10.,10.); 
+    //std::vector<Particle> Pvec = {a,b,c,d};
+    //QuadrupleTree T(Pvec,0.,0.,0.,10.,10.,10.); 
 
-    T.root->PrintNode();
-    T.root->SW->PrintNode();
-    T.root->NW->PrintNode();
-    T.root->NW->SE->PrintNode();
-    T.root->NW->SW->PrintNode();
-    T.root->NW->SW->SW->PrintNode();
-    T.root->NW->SW->NE->PrintNode();
+    //T.root->PrintNode();
+    //T.root->SW->PrintNode();
+    //T.root->NW->PrintNode();
+    //T.root->NW->SE->PrintNode();
+    //T.root->NW->SW->PrintNode();
+    //T.root->NW->SW->SW->PrintNode();
+    //T.root->NW->SW->NE->PrintNode();
     // T.DeleteNode(T.root->SW);
     // T.DeleteNode(T.root->NW->SW);
-    T.root->NW->PrintNode();
+    //T.root->NW->PrintNode();
     // T.DeleteNode(T.root);
     return 0;
 }
