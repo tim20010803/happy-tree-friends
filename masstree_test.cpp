@@ -70,8 +70,8 @@ float calculate_system_energy(const std::vector<Particle>& particles, float G) {
 
 
 void RK4(std::vector<Particle>& particles, float G, float dt) {
+    calculate_gravity(particles, G);
     for (auto& p : particles) {
-        calculate_gravity(particles, G);
         // Get the current velocity and acceleration of the particle
         std::vector<float> current_velocity = p.velocity;
         std::vector<float> current_acceleration = p.acceleration;
@@ -119,7 +119,7 @@ int main() {
     const float G = 6.674e-11;
     std::vector<Particle> particles = {
         {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0},
-        {{1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0}
+        {{1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0}
     };
 
     // Input time and time step
