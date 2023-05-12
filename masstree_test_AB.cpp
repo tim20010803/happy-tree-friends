@@ -8,6 +8,9 @@ struct Particle{
     std::vector<double> posi;
     std::vector<double> velocity;
     std::vector<double> acceleration;
+    std::vector<double> velocity_prev;
+    std::vector<double> acceleration_prev;
+
     double mass;
 };
 
@@ -20,7 +23,7 @@ void calculate_gravity(std::vector<Particle>& particles, double G) {
             // Calculate distance between particles
             double dx = p2.posi[0] - p1.posi[0];
             double dy = p2.posi[1] - p1.posi[1];
-            double dist_squared = dx*dx + dy*dy;
+            double dist_squared = dx * dx + dy * dy;
             double dist_cubed = dist_squared * std::sqrt(dist_squared);
 
             // Calculate gravitational force
@@ -134,6 +137,32 @@ void Verlet_velocity(std::vector<Particle>& particles, double G, double dt) {
     }
 }
 
+void AB(std::vector<Particle>& particles, double G, double dt) {
+    for (auto& p : particles) {
+        // Store original positions and velocities
+        double original_vel_x = p.velocity[0];
+        double original_vel_y = p.velocity[1];
+
+        // Update positions using Adams-Bashforth
+        p.posi[0] += dt * (1.5 * p.velocity[0] - 0.5 * p.velocity_prev[0]);
+        p.posi[1] += dt * (1.5 * p.velocity[1] - 0.5 * p.velocity_prev[1]);
+
+        // Update velocities
+        p.velocity[0] += dt * (1.5 * p.acceleration[0] - 0.5 * p.acceleration_prev[0]);
+        p.velocity[1] += dt * (1.5 * p.acceleration[1] - 0.5 * p.acceleration_prev[1]);
+
+        // Store current accelerations and velocities for the next iteration
+        p.acceleration_prev[0] = p.acceleration[0];
+        p.acceleration_prev[1] = p.acceleration[1];
+        p.velocity_prev[0] = original_vel_x;
+        p.velocity_prev[1] = original_vel_y;
+
+        // Reset accelerations for the next iteration
+        calculate_gravity(particles, G);
+    }
+}
+
+
 
 // main function is for testing
 int main() {
@@ -141,14 +170,20 @@ int main() {
     const double G = 6.674e-11;
     std::cout << std::fixed << std::setprecision(12);
 
-    std::vector<Particle> particles = {
-        {{1.0, 2.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
-        {{1.0, 1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
-    };
     // Input time and time step
-    double t=M_PI/pow(G*50000000,0.5), dt=0.00001;
+    //double t=M_PI/pow(G*50000000,0.5), dt=0.00001;
+    // Input time and time step
+    double t=1., dt=0.00001;
+
     // Perform simulation
     int num_steps = t / dt;
+
+    //RK4
+    std::vector<Particle> particles = {
+        {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
+    };
+    
     for (int i = 0; i <= num_steps; i++) {
         RK4(particles, G, dt);
         /*
@@ -181,9 +216,10 @@ int main() {
     std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
     std::cout << "System energy: " << system_energy << std::endl;
 
+    //verlet
     particles = {
-        {{1.0, 2.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
-        {{1.0, 1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
+        {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
     };
 
     for (int i = 0; i <= num_steps; i++) {
@@ -220,5 +256,45 @@ int main() {
     std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
     std::cout << "System energy: " << system_energy << std::endl;
 
+    //AB
+    particles = {
+        {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
+    };
+
+    for (int i = 0; i <= num_steps; i++) {
+        AB(particles, G, dt);
+        
+
+        /*
+        std::vector<double> system_momentum = calculate_system_momentum(particles);
+        double system_energy = calculate_system_energy(particles, G);
+        std::cout << "Verlet_velocity Time: " << i*dt << std::endl;
+        std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
+        std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
+        std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
+        std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
+        std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
+        std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
+        std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
+        std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
+        std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
+        std::cout << "System energy: " << system_energy << std::endl;
+        */
+    }
+    system_momentum = calculate_system_momentum(particles);
+    system_energy = calculate_system_energy(particles, G);
+    std::cout << "AB Time: " << num_steps*dt << std::endl;
+    std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
+    std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
+    std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
+    std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
+    std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
+    std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
+    std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
+    std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
+    std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
+    std::cout << "System energy: " << system_energy << std::endl;
+    
     return 0;
 }
