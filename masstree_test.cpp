@@ -2,6 +2,8 @@
 #include <queue>
 #include <vector>
 #include <cmath>
+#include <iomanip>
+
 struct Particle{
     std::vector<double> posi;
     std::vector<double> velocity;
@@ -113,29 +115,47 @@ void RK4(std::vector<Particle>& particles, double G, double dt) {
     }
 }
 
+void Verlet_velocity(std::vector<Particle>& particles, double G, double dt) {
+    for (auto& p : particles) {
+        // Update position using current velocity and acceleration
+        p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;
+        p.posi[1] += p.velocity[1] * dt + 0.5 * p.acceleration[1] * dt * dt;
+        
+        // Calculate updated acceleration based on new positions
+        std::vector<double> prev_acceleration = p.acceleration;
+        p.acceleration[0] = 0.0;
+        p.acceleration[1] = 0.0;
+        
+        calculate_gravity(particles, G);
+        
+        // Update velocity using average of old and new accelerations
+        p.velocity[0] += 0.5 * (prev_acceleration[0] + p.acceleration[0]) * dt;
+        p.velocity[1] += 0.5 * (prev_acceleration[1] + p.acceleration[1]) * dt;
+    }
+}
+
 
 // main function is for testing
 int main() {
     // Define simulation parameters
     const double G = 6.674e-11;
     std::vector<Particle> particles = {
-        {{1.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0},
-        {{1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}, 1.0}
+        {{1.0, 2.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
+        {{1.0, 1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
     };
-
+    std::cout << std::fixed << std::setprecision(12);
     // Input time and time step
-    double t=0.01, dt=0.001;
-
+    double t=M_PI/pow(G*50000000,0.5), dt=0.00001;
     // Perform simulation
     int num_steps = t / dt;
-    for (int i = 0; i < num_steps; i++) {
+    for (int i = 0; i <= num_steps; i++) {
         RK4(particles, G, dt);
+        /*
         std::vector<double> system_momentum = calculate_system_momentum(particles);
         double system_energy = calculate_system_energy(particles, G);
-
-        std::cout << "Time: " << i*dt << std::endl;
+        std::cout << "RK4 Time: " << i*dt << std::endl;
         std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
-        std::cout << "Particle 2 mass: " << particles[1].mass << ", " << particles[1].posi[1] << std::endl;
+        std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
         std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
         std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
         std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
@@ -144,6 +164,60 @@ int main() {
         std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
         std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
         std::cout << "System energy: " << system_energy << std::endl;
+        */
     }
+    std::vector<double> system_momentum = calculate_system_momentum(particles);
+    double system_energy = calculate_system_energy(particles, G);
+    std::cout << "RK4 Time: " << num_steps*dt << std::endl;
+    std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
+    std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
+    std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
+    std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
+    std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
+    std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
+    std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
+    std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
+    std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
+    std::cout << "System energy: " << system_energy << std::endl;
+
+    particles = {
+        {{1.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}, 1000},
+        {{1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}, 1000}
+    };
+
+    for (int i = 0; i <= num_steps; i++) {
+        Verlet_velocity(particles, G, dt);
+        
+
+        /*
+        std::vector<double> system_momentum = calculate_system_momentum(particles);
+        double system_energy = calculate_system_energy(particles, G);
+        std::cout << "Verlet_velocity Time: " << i*dt << std::endl;
+        std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
+        std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
+        std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
+        std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
+        std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
+        std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
+        std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
+        std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
+        std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
+        std::cout << "System energy: " << system_energy << std::endl;
+        */
+    }
+    system_momentum = calculate_system_momentum(particles);
+    system_energy = calculate_system_energy(particles, G);
+    std::cout << "Verlet_velocity Time: " << num_steps*dt << std::endl;
+    std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
+    std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
+    std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
+    std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
+    std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
+    std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
+    std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
+    std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
+    std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
+    std::cout << "System energy: " << system_energy << std::endl;
+
     return 0;
 }
