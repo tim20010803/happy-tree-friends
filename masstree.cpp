@@ -2,6 +2,7 @@
 #include <iostream>
 #include <queue>
 #include <vector>
+#include <cmath>
 
 //constant setting
 #define THETA 1.0
@@ -89,9 +90,11 @@ QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,
     root->MaxYBoundary = MY; root->minYBoundary = mY;
     for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
         Insert(Particles[i]);
-        TotalForce(Particles[i]);
     }
     Monople(root);                                        //initialize all monople of nodes in whole tree
+    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+        TotalForce(Particles[i]);
+    }
 }
 QuadrupleTree::~QuadrupleTree(){
     if (root != NULL){
@@ -513,12 +516,13 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
                     q.push(section[i]);
                 }
             }
-            current = q.front();
-            q.pop();
+            section.clear();
+        current = q.front();
+        q.pop();
         }
     }
-    Ptc.acceleration[0] = acc[0];
-    Ptc.acceleration[1] = acc[1];
+    Ptc.acceleration[0] = accSum[0];
+    Ptc.acceleration[1] = accSum[1];
     return;
 }
 
@@ -529,23 +533,27 @@ int main() {
     a.posi = {1.,6.,4.};
     a.velocity = {4.,3.,2.};
     a.mass = {12.};
+    a.acceleration = {0., 0., 0.};
     Particle b;
     b.posi = {2.,7.,8.};
     b.velocity = {1.,6.,7.};
     b.mass = {23.};
+    b.acceleration = {0., 0., 0.};
     Particle c;
     c.posi = {3.,5.,8.};
     c.velocity = {1.,6.,7.};
     c.mass = {212.};
+    c.acceleration = {0., 0., 0.};
     Particle d;
     d.posi = {4.,6.,8.};
     d.velocity = {8.,6.,7.};
     d.mass = {62.};
+    d.acceleration = {0., 0., 0.};
     
     std::vector<Particle> Pvec = {a,b,c,d};
     QuadrupleTree T(Pvec,0.,0.,0.,10.,10.,10.); 
     
-
+    //std::cout << "Particle a: " <<  a.acceleration[0] <<  "\n";
 
     T.root->PrintNode();
     T.root->SW->PrintNode();
