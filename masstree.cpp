@@ -4,9 +4,11 @@
 #include <vector>
 #include <cmath>
 
+
 //constant setting
 #define THETA 1.0
 #define G_CONST 6.67428e-11
+
 
 struct Particle{
     std::vector<float> posi;
@@ -28,11 +30,13 @@ public:                                // set all of parameter be public for tes
     int level;                         // the depth level of this node (which is zero for root node)
     bool leaf;                         // if leaf is true then this node is a leaf the point toward the particle is ptclPtr
     float *monople;                    // storege the monople of all subtree
+
     float MaxXBoundary{0};             // the boundary of each Node (I haven't test if all the nodes own their right boundary.)
     float minXBoundary{0};
     float MaxYBoundary{0};
     float minYBoundary{0};
     std::vector<float> CalculateForce(TreeNode *Node, Particle &tarPtc); //Compute the force(acceleration) acting from this node to a particle p
+
 
     TreeNode():NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(false),ptclPtr{NULL},monople{NULL}{};                   // constuctor of TreeNode (which creats a TreeNode object and initialize parameters) 
     TreeNode(Particle *newPtcl):NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(true),ptclPtr(newPtcl),monople{NULL}{};// constuctor of TreeNode which stores the particle's location into pointer and set leaf==true (since this node is a particle)
@@ -69,6 +73,7 @@ public:
     QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
     QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,float mZ,float MX,float MY, float MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
     ~QuadrupleTree();                  // desturctor (to destroy the whole tree and release the memory space it takes)
+
     void DeleteNode(TreeNode *Node);                      // delete the Node and its all descendent
     void Insert(Particle& newPtc);                        // insert one particle in the tree
     void Trim(TreeNode *Node);                            // delete all empty subnodes and itself if the input node turn out to be a empty (those node without any child and not a particle node)
@@ -86,15 +91,19 @@ QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,
     root = new TreeNode;                                  // allocate memory for root
     maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
     minX = mX; minY = mY; minZ = mZ; 
+
     root->MaxXBoundary = MX; root->minXBoundary = mX;     // save the boundary of root
     root->MaxYBoundary = MY; root->minYBoundary = mY;
+
     for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
         Insert(Particles[i]);
     }
     Monople(root);                                        //initialize all monople of nodes in whole tree
+
     for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
         TotalForce(Particles[i]);
     }
+
 }
 QuadrupleTree::~QuadrupleTree(){
     if (root != NULL){
@@ -134,6 +143,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 tempOut = tempOut->NE;                                  // move tempnode to new node for next run
                 tempOut->MaxXBoundary = tempmaxX; tempOut->minXBoundary = tempminX; //save the boundary of the node
                 tempOut->MaxYBoundary = tempmaxY; tempOut->minYBoundary = tempminY;
+
             }
             else if (firstPtlE == false and firstPtlN){
                 MX = midX;
@@ -144,6 +154,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 tempOut = tempOut->NW;
                 tempOut->MaxXBoundary = tempmaxX; tempOut->minXBoundary = tempminX;
                 tempOut->MaxYBoundary = tempmaxY; tempOut->minYBoundary = tempminY;
+
             }
             else if (firstPtlE and firstPtlN  == false){
                 mX = midX;
@@ -154,6 +165,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 tempOut = tempOut->SE;
                 tempOut->MaxXBoundary = tempmaxX; tempOut->minXBoundary = tempminX;
                 tempOut->MaxYBoundary = tempmaxY; tempOut->minYBoundary = tempminY;
+
             }
             else if (firstPtlE == false and firstPtlN == false){
                 MX = midX;
@@ -164,6 +176,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 tempOut = tempOut->SW;
                 tempOut->MaxXBoundary = tempmaxX; tempOut->minXBoundary = tempminX;
                 tempOut->MaxYBoundary = tempmaxY; tempOut->minYBoundary = tempminY;
+
             }
             midX = (mX + MX)/2.; midY = (mY + MY)/2.; midZ = (mZ + MZ)/2.;    // update new mid-line of new region 
             firstPtlN = ptcTree1->ptclPtr->posi[1] > midY;                    // determin each Particle in which part of subregion
@@ -180,6 +193,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 ptcTree1->level = tempOut->level +1;
                 ptcTree1->MaxXBoundary = tempmaxX; ptcTree1->minXBoundary = tempminX; // save the boundary of the node
                 ptcTree1->MaxYBoundary = tempmaxY; ptcTree1->minYBoundary = tempminY;
+
             }
             else if (firstPtlE == false and firstPtlN){
                 tempOut->NW = ptcTree1;
@@ -201,6 +215,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 ptcTree1->level = tempOut->level +1;
                 ptcTree1->MaxXBoundary = tempmaxX; ptcTree1->minXBoundary = tempminX;
                 ptcTree1->MaxYBoundary = tempmaxY; ptcTree1->minYBoundary = tempminY;
+
             }                                            // creat node for second paticle and connect it to tempOut
             if (secPtlE and secPtlN){
                 tempOut->NE = new TreeNode(&ptc2);
@@ -209,6 +224,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 tempOut->NE->leaf = true;
                 tempOut->NE->MaxXBoundary = tempmaxX; tempOut->NE->minXBoundary = tempminX;
                 tempOut->NE->MaxYBoundary = tempmaxY; tempOut->NE->minYBoundary = tempminY;
+
             }
             else if (secPtlE == false and secPtlN){
                 tempOut->NW = new TreeNode(&ptc2);
@@ -217,6 +233,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 tempOut->NW->leaf = true;
                 tempOut->NW->MaxXBoundary = tempmaxX; tempOut->NW->minXBoundary = tempminX;
                 tempOut->NW->MaxYBoundary = tempmaxY; tempOut->NW->minYBoundary = tempminY;
+
             }
             else if (secPtlE and secPtlN  == false){
                 tempOut->SE = new TreeNode(&ptc2);
@@ -225,6 +242,7 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
                 tempOut->SE->leaf = true;
                 tempOut->SE->MaxXBoundary = tempmaxX; tempOut->SE->minXBoundary = tempminX;
                 tempOut->SE->MaxYBoundary = tempmaxY; tempOut->SE->minYBoundary = tempminY;
+
             }
             else if (secPtlE == false and secPtlN == false){
                 tempOut->SW = new TreeNode(&ptc2);
@@ -524,6 +542,101 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
     Ptc.acceleration[0] = accSum[0];
     Ptc.acceleration[1] = accSum[1];
     return;
+
+void calculate_gravity(std::vector<Particle>& particles, float G) {
+    for (auto& p1 : particles) {
+        for (auto& p2 : particles) {
+            if (&p1 == &p2) {
+                continue; // Skip self-interaction
+            }
+            // Calculate distance between particles
+            float dx = p2.posi[0] - p1.posi[0];
+            float dy = p2.posi[1] - p1.posi[1];
+            float dist_squared = dx*dx + dy*dy;
+            float dist_cubed = dist_squared * std::sqrt(dist_squared);
+
+            // Calculate gravitational force
+            float force_magnitude = G * p1.mass * p2.mass / dist_cubed;
+            float force_x = force_magnitude * dx;
+            float force_y = force_magnitude * dy;
+
+            // Update particle accelerations
+            p1.acceleration[0] += force_x / p1.mass;
+            p1.acceleration[1] += force_y / p1.mass;
+        }
+    }
+}
+
+std::vector<float> calculate_system_momentum(const std::vector<Particle>& particles) {
+    std::vector<float> system_momentum(2, 0.0);
+    for (const auto& p : particles) {
+        system_momentum[0] += p.mass * p.velocity[0];
+        system_momentum[1] += p.mass * p.velocity[1];
+    }
+    return system_momentum;
+}
+
+float calculate_system_energy(const std::vector<Particle>& particles, float G) {
+    float total_kinetic_energy = 0.0;
+    float total_potential_energy = 0.0;
+
+    for (const auto& p : particles) {
+        // Calculate kinetic energy
+        float speed_squared = p.velocity[0]*p.velocity[0] + p.velocity[1]*p.velocity[1];
+        float kinetic_energy = 0.5 * p.mass * speed_squared;
+        total_kinetic_energy += kinetic_energy;
+
+        // Calculate potential energy
+        for (const auto& other_p : particles) {
+            if (&p == &other_p) {
+                continue;
+            }
+            float dx = other_p.posi[0] - p.posi[0];
+            float dy = other_p.posi[1] - p.posi[1];
+            float distance = std::sqrt(dx*dx + dy*dy);
+            float potential_energy = -G * p.mass * other_p.mass / distance;
+            total_potential_energy += potential_energy;
+        }
+    }
+
+    return total_kinetic_energy + total_potential_energy;
+}
+
+
+void perform_rk45_step(std::vector<Particle>& particles, float G, float dt) {
+    // Define coefficients for RK45
+    std::vector<float> a = {0.0, 1.0/4.0, 3.0/8.0, 12.0/13.0, 1.0, 1.0/2.0};
+    std::vector<float> b = {25.0/216.0, 0.0, 1408.0/2565.0, 2197.0/4104.0, -1.0/5.0, 0.0};
+    std::vector<float> c = {1.0/360.0, 0.0, -128.0/4275.0, -2197.0/75240.0, 1.0/50.0, 2.0/55.0};
+
+    // Perform RK45 step
+    std::vector<Particle> orig_particles = particles;
+    std::vector<std::vector<float>> k(6, std::vector<float>(particles.size()));
+    for (int i = 0; i < 6; i++) {
+        particles = orig_particles;
+        for (int j = 0; j < particles.size(); j++) {
+            particles[j].posi[0] += a[i]*dt*particles[j].velocity[0];
+            particles[j].posi[1] += a[i]*dt*particles[j].velocity[1];
+            particles[j].velocity[0] += a[i]*dt*particles[j].acceleration[0];
+            particles[j].velocity[1] += a[i]*dt*particles[j].acceleration[1];
+        }
+        calculate_gravity(particles, G);
+        for (int j = 0; j < particles.size(); j++) {
+            k[i][j] = particles[j].velocity[0];
+            k[i][j+particles.size()] = particles[j].velocity[1];
+            k[i][j+2*particles.size()] = particles[j].acceleration[0];
+            k[i][j+3*particles.size()] = particles[j].acceleration[1];
+        }
+    }
+    // Calculate new particle positions and velocities
+    for (int i = 0; i < particles.size(); i++) {
+        particles[i].posi[0] += dt*(b[0]*k[0][i] + b[1]*k[1][i] + b[2]*k[2][i] + b[3]*k[3][i] + b[4]*k[4][i] + b[5]*k[5][i]);
+        particles[i].posi[1] += dt*(b[0]*k[0][i+particles.size()] + b[1]*k[1][i+particles.size()] + b[2]*k[2][i+particles.size()] + b[3]*k[3][i+particles.size()] + b[4]*k[4][i+particles.size()] + b[5]*k[5][i+particles.size()]);
+        particles[i].velocity[0] += dt*(c[0]*k[0][i+2*particles.size()] + c[1]*k[1][i+2*particles.size()] + c[2]*k[2][i+2*particles.size()] + c[3]*k[3][i+2*particles.size()] + c[4]*k[4][i+2*particles.size()] + c[5]*k[5][i+2*particles.size()]);
+        particles[i].velocity[1] += dt*(c[0]*k[0][i+3*particles.size()] + c[1]*k[1][i+3*particles.size()] + c[2]*k[2][i+3*particles.size()] + c[3]*k[3][i+3*particles.size()] + c[4]*k[4][i+3*particles.size()] + c[5]*k[5][i+3*particles.size()]);
+        particles[i].acceleration[0] += dt*(c[0]*k[0][i+4*particles.size()] + c[1]*k[1][i+4*particles.size()] + c[2]*k[2][i+4*particles.size()] + c[3]*k[3][i+4*particles.size()] + c[4]*k[4][i+4*particles.size()] + c[5]*k[5][i+4*particles.size()]);
+        particles[i].acceleration[1] += dt*(c[0]*k[0][i+5*particles.size()] + c[1]*k[1][i+5*particles.size()] + c[2]*k[2][i+5*particles.size()] + c[3]*k[3][i+5*particles.size()] + c[4]*k[4][i+5*particles.size()] + c[5]*k[5][i+5*particles.size()]);
+    }
 }
 
 
