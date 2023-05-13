@@ -72,8 +72,6 @@ double calculate_system_energy(const std::vector<Particle>& particles, double G)
 
 
 void RK4(std::vector<Particle>& particles, double G, double dt) {
-    calculate_gravity(particles, G);
-
     for (auto& p : particles) {
         // Get the current velocity and acceleration of the particle
         std::vector<double> current_velocity = p.velocity;
@@ -112,22 +110,27 @@ void RK4(std::vector<Particle>& particles, double G, double dt) {
             p.velocity[i] += (1.0 / 6.0) * dt * (k1_velocity[i] + 2.0 * k2_velocity[i] + 2.0 * k3_velocity[i] + k4_velocity[i]);
             p.posi[i] += (1.0 / 6.0) * dt * (k1_position[i] + 2.0 * k2_position[i] + 2.0 * k3_position[i] + k4_position[i]);
         }
+        p.acceleration[0] = 0.0;
+        p.acceleration[1] = 0.0;
     }
+    calculate_gravity(particles, G);
 }
 
 void Verlet_velocity(std::vector<Particle>& particles, double G, double dt) {
+    std::vector<double> prev_acceleration;
     for (auto& p : particles) {
         // Update position using current velocity and acceleration
         p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;
         p.posi[1] += p.velocity[1] * dt + 0.5 * p.acceleration[1] * dt * dt;
         
         // Calculate updated acceleration based on new positions
-        std::vector<double> prev_acceleration = p.acceleration;
+        prev_acceleration[0] = p.acceleration[0];
+        prev_acceleration[1] = p.acceleration[1];
         p.acceleration[0] = 0.0;
         p.acceleration[1] = 0.0;
-        
+    }
         calculate_gravity(particles, G);
-        
+    for (auto& p : particles) {
         // Update velocity using average of old and new accelerations
         p.velocity[0] += 0.5 * (prev_acceleration[0] + p.acceleration[0]) * dt;
         p.velocity[1] += 0.5 * (prev_acceleration[1] + p.acceleration[1]) * dt;
@@ -140,15 +143,16 @@ int main() {
     // Define simulation parameters
     const double G = 6.674e-11;
     std::cout << std::fixed << std::setprecision(12);
+    // Input time and time step
+    double t=M_PI/pow(G*50000000,0.5), dt=0.001;
+    // Perform simulation
+    int num_steps = t / dt;
 
     std::vector<Particle> particles = {
         {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
         {{0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
     };
-    // Input time and time step
-    double t=M_PI/pow(G*50000000,0.5), dt=0.001;
-    // Perform simulation
-    int num_steps = t / dt;
+    calculate_gravity(particles, G);
     for (int i = 0; i <= num_steps; i++) {
         RK4(particles, G, dt);
         /*
@@ -185,7 +189,7 @@ int main() {
         {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
         {{0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
     };
-
+    calculate_gravity(particles, G);
     for (int i = 0; i <= num_steps; i++) {
         Verlet_velocity(particles, G, dt);
         
