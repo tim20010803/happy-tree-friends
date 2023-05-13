@@ -75,9 +75,10 @@ double calculate_system_energy(const std::vector<Particle>& particles, double G)
 
 
 void RK4(std::vector<Particle>& particles, double G, double dt) {
-    calculate_gravity(particles, G);
-
     for (auto& p : particles) {
+        p.acceleration[0] = 0.0;
+        p.acceleration[1] = 0.0;
+        calculate_gravity(particles, G);
         // Get the current velocity and acceleration of the particle
         std::vector<double> current_velocity = p.velocity;
         std::vector<double> current_acceleration = p.acceleration;
@@ -119,25 +120,28 @@ void RK4(std::vector<Particle>& particles, double G, double dt) {
 }
 
 void Verlet_velocity(std::vector<Particle>& particles, double G, double dt) {
+    calculate_gravity(particles, G);
     for (auto& p : particles) {
         // Update position using current velocity and acceleration
         p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;
         p.posi[1] += p.velocity[1] * dt + 0.5 * p.acceleration[1] * dt * dt;
         
         // Calculate updated acceleration based on new positions
-        std::vector<double> prev_acceleration = p.acceleration;
+        p.acceleration_prev[0] = p.acceleration[0];
+        p.acceleration_prev[1] = p.acceleration[1];
+
         p.acceleration[0] = 0.0;
         p.acceleration[1] = 0.0;
-        
         calculate_gravity(particles, G);
         
         // Update velocity using average of old and new accelerations
-        p.velocity[0] += 0.5 * (prev_acceleration[0] + p.acceleration[0]) * dt;
-        p.velocity[1] += 0.5 * (prev_acceleration[1] + p.acceleration[1]) * dt;
+        p.velocity[0] += 0.5 * (p.acceleration_prev[0] + p.acceleration[0]) * dt;
+        p.velocity[1] += 0.5 * (p.acceleration_prev[1] + p.acceleration[1]) * dt;
     }
 }
 
 void AB(std::vector<Particle>& particles, double G, double dt) {
+    calculate_gravity(particles, G);
     for (auto& p : particles) {
         // Store original positions and velocities
         double original_vel_x = p.velocity[0];
@@ -158,6 +162,8 @@ void AB(std::vector<Particle>& particles, double G, double dt) {
         p.velocity_prev[1] = original_vel_y;
 
         // Reset accelerations for the next iteration
+        p.acceleration[0] = 0.0;
+        p.acceleration[1] = 0.0;
         calculate_gravity(particles, G);
     }
 }
@@ -171,17 +177,15 @@ int main() {
     std::cout << std::fixed << std::setprecision(12);
 
     // Input time and time step
-    //double t=M_PI/pow(G*50000000,0.5), dt=0.00001;
-    // Input time and time step
-    double t=1., dt=0.00001;
+    double t=4.*M_PI/pow(G*1000000000,0.5), dt=0.001;
 
     // Perform simulation
     int num_steps = t / dt;
 
     //RK4
     std::vector<Particle> particles = {
-        {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
-        {{0.0, -1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
+        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
     
     for (int i = 0; i <= num_steps; i++) {
@@ -204,7 +208,7 @@ int main() {
     }
     std::vector<double> system_momentum = calculate_system_momentum(particles);
     double system_energy = calculate_system_energy(particles, G);
-    std::cout << "RK4 Time: " << num_steps*dt << std::endl;
+    std::cout << "RK4 Time: " << (num_steps)*dt << std::endl;
     std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
     std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
     std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
@@ -218,8 +222,8 @@ int main() {
 
     //verlet
     particles = {
-        {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
-        {{0.0, -1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
+        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
 
     for (int i = 0; i <= num_steps; i++) {
@@ -244,7 +248,7 @@ int main() {
     }
     system_momentum = calculate_system_momentum(particles);
     system_energy = calculate_system_energy(particles, G);
-    std::cout << "Verlet_velocity Time: " << num_steps*dt << std::endl;
+    std::cout << "Verlet_velocity Time: " << (num_steps)*dt << std::endl;
     std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
     std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
     std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
@@ -258,8 +262,8 @@ int main() {
 
     //AB
     particles = {
-        {{0.0, 1.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000},
-        {{0.0, -1.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, {-pow(G*500000000,0.5), 0.0}, {0.0, 0.0}, 1000000000}
+        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
 
     for (int i = 0; i <= num_steps; i++) {
@@ -284,7 +288,7 @@ int main() {
     }
     system_momentum = calculate_system_momentum(particles);
     system_energy = calculate_system_energy(particles, G);
-    std::cout << "AB Time: " << num_steps*dt << std::endl;
+    std::cout << "AB Time: " << (num_steps)*dt << std::endl;
     std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
     std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
     std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
