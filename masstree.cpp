@@ -9,8 +9,6 @@ struct Particle{
     std::vector<double> posi;
     std::vector<double> velocity;
     std::vector<double> acceleration;
-    std::vector<double> velocity_prev;
-    std::vector<double> acceleration_prev;
 
     double mass;
 };

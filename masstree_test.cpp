@@ -8,8 +8,6 @@ struct Particle{
     std::vector<double> posi;
     std::vector<double> velocity;
     std::vector<double> acceleration;
-    std::vector<double> velocity_prev;
-    std::vector<double> acceleration_prev;
 
     double mass;
 };
@@ -120,45 +118,47 @@ void RK4(std::vector<Particle>& particles, double G, double dt) {
 }
 
 void Verlet_velocity(std::vector<Particle>& particles, double G, double dt) {
+    std::vector<std::vector<double>> acceleration_prevs;
+    acceleration_prevs.reserve(particles.size());
+
     for (auto& p : particles) {
         // Update position using current velocity and acceleration
         p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;
         p.posi[1] += p.velocity[1] * dt + 0.5 * p.acceleration[1] * dt * dt;
-        
-        // Calculate updated acceleration based on new positions
-        p.acceleration_prev[0] = p.acceleration[0];
-        p.acceleration_prev[1] = p.acceleration[1];
+
+        // Save the previous acceleration in the vector
+        acceleration_prevs.push_back(p.acceleration);
 
         p.acceleration[0] = 0.0;
         p.acceleration[1] = 0.0;
     }
-        calculate_gravity(particles, G);
+
+    calculate_gravity(particles, G);
+
+    // Use the saved acceleration_prevs to update velocities
+    auto prev_iter = acceleration_prevs.begin();
     for (auto& p : particles) {
         // Update velocity using average of old and new accelerations
-        p.velocity[0] += 0.5 * (p.acceleration_prev[0] + p.acceleration[0]) * dt;
-        p.velocity[1] += 0.5 * (p.acceleration_prev[1] + p.acceleration[1]) * dt;
+        p.velocity[0] += 0.5 * ((*prev_iter)[0] + p.acceleration[0]) * dt;
+        p.velocity[1] += 0.5 * ((*prev_iter)[1] + p.acceleration[1]) * dt;
+
+        ++prev_iter;
     }
 }
-
 void AB(std::vector<Particle>& particles, double G, double dt) {
     for (auto& p : particles) {
         // Store original positions and velocities
-        double original_vel_x = p.velocity[0];
-        double original_vel_y = p.velocity[1];
+        std::vector<double> prev_velocity = p.velocity;
+        std::vector<double> prev_acceleration = p.acceleration;
+
 
         // Update positions using Adams-Bashforth
-        p.posi[0] += dt * (1.5 * p.velocity[0] - 0.5 * p.velocity_prev[0]);
-        p.posi[1] += dt * (1.5 * p.velocity[1] - 0.5 * p.velocity_prev[1]);
+        p.posi[0] += dt * (1.5 * p.velocity[0] - 0.5 * prev_velocity[0]);
+        p.posi[1] += dt * (1.5 * p.velocity[1] - 0.5 * prev_velocity[1]);
 
         // Update velocities
-        p.velocity[0] += dt * (1.5 * p.acceleration[0] - 0.5 * p.acceleration_prev[0]);
-        p.velocity[1] += dt * (1.5 * p.acceleration[1] - 0.5 * p.acceleration_prev[1]);
-
-        // Store current accelerations and velocities for the next iteration
-        p.acceleration_prev[0] = p.acceleration[0];
-        p.acceleration_prev[1] = p.acceleration[1];
-        p.velocity_prev[0] = original_vel_x;
-        p.velocity_prev[1] = original_vel_y;
+        p.velocity[0] += dt * (1.5 * p.acceleration[0] - 0.5 * prev_acceleration[0]);
+        p.velocity[1] += dt * (1.5 * p.acceleration[1] - 0.5 * prev_acceleration[1]);
 
         // Reset accelerations for the next iteration
         p.acceleration[0] = 0.0;
@@ -166,7 +166,6 @@ void AB(std::vector<Particle>& particles, double G, double dt) {
     }
     calculate_gravity(particles, G);
 }
-
 
 
 // main function is for testing
@@ -183,15 +182,12 @@ int main() {
 
     //RK4
     std::vector<Particle> particles = {
-        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
-        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
+        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
         std::cout << "theoretical energy: " << calculate_system_energy(particles, G) << std::endl;
 
     calculate_gravity(particles, G);
-    for (auto& p : particles) {
-        p.acceleration_prev=p.acceleration;
-    }
     for (int i = 0; i <= num_steps; i++) {
         RK4(particles, G, dt);
         /*
@@ -228,8 +224,8 @@ int main() {
 
     //verlet
     particles = {
-        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
-        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
+        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
     calculate_gravity(particles, G);
     for (int i = 0; i <= num_steps; i++) {
@@ -270,13 +266,10 @@ int main() {
 
     //AB
     particles = {
-        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
-        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
+        {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
+        {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
     calculate_gravity(particles, G);
-    for (auto& p : particles) {
-        p.acceleration_prev=p.acceleration;
-    }
     for (int i = 0; i <= num_steps; i++) {
         AB(particles, G, dt);
         
@@ -296,6 +289,7 @@ int main() {
         std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
         std::cout << "System energy: " << system_energy << std::endl;
         */
+        
     }
     system_momentum = calculate_system_momentum(particles);
     system_energy = calculate_system_energy(particles, G);
