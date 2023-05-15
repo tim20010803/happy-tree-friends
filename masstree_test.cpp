@@ -179,7 +179,7 @@ int main() {
 
     // Perform simulation
     int num_steps = t / dt;
-
+    /*
     //RK4
     std::vector<Particle> particles = {
         {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
@@ -204,7 +204,7 @@ int main() {
         std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
         std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
         std::cout << "System energy: " << system_energy << std::endl;
-        */
+        
     }
     std::vector<double> system_momentum = calculate_system_momentum(particles);
     double system_energy = calculate_system_energy(particles, G);
@@ -221,9 +221,9 @@ int main() {
     std::cout << "System energy: " << system_energy << std::endl;
 
     std::cout<<"//////////////////////////////////"<<std::endl;
-
+    */
     //verlet
-    particles = {
+    std::vector<Particle> particles = {
         {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
         {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
@@ -248,8 +248,8 @@ int main() {
         std::cout << "System energy: " << system_energy << std::endl;
         */
     }
-    system_momentum = calculate_system_momentum(particles);
-    system_energy = calculate_system_energy(particles, G);
+    std::vector<double> system_momentum = calculate_system_momentum(particles);
+    double system_energy = calculate_system_energy(particles, G);
     std::cout << "Verlet_velocity Time: " << (num_steps)*dt << std::endl;
     std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
     std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
@@ -262,8 +262,7 @@ int main() {
     std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
     std::cout << "System energy: " << system_energy << std::endl;
 
-    std::cout<<"//////////////////////////////////"<<std::endl;
-
+    /*
     //AB
     particles = {
         {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
@@ -288,7 +287,6 @@ int main() {
         std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
         std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
         std::cout << "System energy: " << system_energy << std::endl;
-        */
         
     }
     system_momentum = calculate_system_momentum(particles);
@@ -304,5 +302,7 @@ int main() {
     std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
     std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
     std::cout << "System energy: " << system_energy << std::endl;
+    */
+
     return 0;
 }
