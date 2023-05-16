@@ -4,15 +4,16 @@
 #include <vector>
 #include <cmath>
 
+#include <iomanip>
 //constant setting
 #define THETA 1.0
 #define G_CONST 6.67428e-11
-
 struct Particle{
-    std::vector<float> posi;
-    std::vector<float> velocity;
-    std::vector<float> acceleration;
-    float mass;
+    std::vector<double> posi;
+    std::vector<double> velocity;
+    std::vector<double> acceleration;
+
+    double mass;
 };
 
 class QuadrupleTree;
@@ -432,7 +433,7 @@ float *QuadrupleTree::Monople(TreeNode *Node){
 
 
 //calculate the force(acceleration) acting from Node to the target particle
-std::vector<float> TreeNode::CalculateForce(TreeNode *Node, Particle &tarPtc){
+std::vector<double> TreeNode::CalculateForce(TreeNode *Node, Particle &tarPtc){
 
     float r{0};float a{0}; 
     std::vector<float> acc{0., 0.};
@@ -497,6 +498,66 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
     return;
 }
 
+void calculate_gravity(std::vector<Particle>& particles, double G) {
+    for (auto& p1 : particles) {
+        for (auto& p2 : particles) {
+            if (&p1 == &p2) {
+                continue; // Skip self-interaction
+            }
+            // Calculate distance between particles
+            double dx = p2.posi[0] - p1.posi[0];
+            double dy = p2.posi[1] - p1.posi[1];
+            double dist_squared = dx * dx + dy * dy;
+            double dist_cubed = dist_squared * std::sqrt(dist_squared);
+
+            // Calculate gravitational force
+            double force_magnitude = G * p1.mass * p2.mass / dist_cubed;
+            double force_x = force_magnitude * dx;
+            double force_y = force_magnitude * dy;
+
+            // Update particle accelerations
+            p1.acceleration[0] += force_x / p1.mass;
+            p1.acceleration[1] += force_y / p1.mass;
+        }
+    }
+}
+
+std::vector<double> calculate_system_momentum(const std::vector<Particle>& particles) {
+    std::vector<double> system_momentum(2, 0.0);
+    for (const auto& p : particles) {
+        system_momentum[0] += p.mass * p.velocity[0];
+        system_momentum[1] += p.mass * p.velocity[1];
+    }
+    return system_momentum;
+}
+
+
+
+double calculate_system_energy(const std::vector<Particle>& particles) {
+  double total_kinetic_energy = 0.0;
+  double total_potential_energy = 0.0;
+  
+    for (const auto& p : particles) {
+        // Calculate kinetic energy
+        double speed_squared = p.velocity[0]*p.velocity[0] + p.velocity[1]*p.velocity[1];
+        double kinetic_energy = 0.5 * p.mass * speed_squared;
+        total_kinetic_energy += kinetic_energy;
+
+        // Calculate potential energy
+        for (const auto& other_p : particles) {
+            if (&p == &other_p) {
+                continue;
+            }
+            double dx = other_p.posi[0] - p.posi[0];
+            double dy = other_p.posi[1] - p.posi[1];
+            double distance = std::sqrt(dx*dx + dy*dy);
+            double potential_energy = -G * p.mass * other_p.mass / distance;
+            total_potential_energy += potential_energy;
+        }
+    }
+
+    return total_kinetic_energy + total_potential_energy;
+}
 
 // main function is for testing
 int main() {
