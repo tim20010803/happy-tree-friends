@@ -28,8 +28,8 @@ public:                                // set all of parameter be public for tes
     Particle *ptclPtr;                 // the pointer of single particle if this node is a leaf(without any child node), otherwise it's a null pointer.  
     int level;                         // the depth level of this node (which is zero for root node)
     bool leaf;                         // if leaf is true then this node is a leaf the point toward the particle is ptclPtr
-    float *monople;                    // storege the monople of all subtree
-    std::vector<float> CalculateForce(TreeNode *Node, Particle &tarPtc); //Compute the force(acceleration) acting from this node to a particle p
+    double *monople;                    // storege the monople of all subtree
+    std::vector<double> CalculateForce(TreeNode *Node, Particle &tarPtc); //Compute the force(acceleration) acting from this node to a particle p
 
     TreeNode():NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(false),ptclPtr{NULL},monople{NULL}{};                   // constuctor of TreeNode (which creats a TreeNode object and initialize parameters) 
     TreeNode(Particle *newPtcl):NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(true),ptclPtr(newPtcl),monople{NULL}{};// constuctor of TreeNode which stores the particle's location into pointer and set leaf==true (since this node is a particle)
@@ -55,32 +55,32 @@ public:                                // set all of parameter be public for tes
 
 class QuadrupleTree{
 private:
-    float minX{0};float minY{0};float minZ{0}; // the boundary of space (minimum and maximum of x,y,z of all particles)
-    float maxX{1};float maxY{1};float maxZ{1};
-    TreeNode *TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ); 
+    double minX{0};double minY{0};double minZ{0}; // the boundary of space (minimum and maximum of x,y,z of all particles)
+    double maxX{1};double maxY{1};double maxZ{1};
+    TreeNode *TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,double tempminX,double tempminY,double tempminZ,double tempmaxX,double tempmaxY, double tempmaxZ); 
     // TwoParticleSubtree function creats a tree which connects two node particle,
     // if a particle in the same region of existing particle in a node 
     // in the original level of first particle
 public:
     TreeNode *root;
     QuadrupleTree():root(NULL){};
-    QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
-    QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,float mZ,float MX,float MY, float MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
+    QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
+    QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
     ~QuadrupleTree();                  // desturctor (to destroy the whole tree and release the memory space it takes)
     void DeleteNode(TreeNode *Node);                      // delete the Node and its all descendent
     void Insert(Particle& newPtc);                        // insert one particle in the tree
     void Trim(TreeNode *Node);                            // delete all empty subnodes and itself if the input node turn out to be a empty (those node without any child and not a particle node)
-    float *Monople(TreeNode *Node);                       // return total mass and center of mass of this subtree: (mass, x, y, z) and initialize the monople at each tree (it don't modify any monople in the subtree, it just read it.)
+    double *Monople(TreeNode *Node);                       // return total mass and center of mass of this subtree: (mass, x, y, z) and initialize the monople at each tree (it don't modify any monople in the subtree, it just read it.)
     void TotalForce(Particle &Ptc);                       // calculate the total force(acceleration) of a given particle
     
 };
-QuadrupleTree::QuadrupleTree(Particle &firstPtc,float mX,float mY,float mZ,float MX,float MY, float MZ){                 
+QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ){                 
     root = new TreeNode;                                  // allocate memory for root
     maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
     minX = mX; minY = mY; minZ = mZ; 
     Insert(firstPtc);
 }
-QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,float mX,float mY,float mZ,float MX,float MY, float MZ){  
+QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
     root = new TreeNode;                                  // allocate memory for root
     maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
     minX = mX; minY = mY; minZ = mZ;
@@ -102,10 +102,10 @@ QuadrupleTree::~QuadrupleTree(){
     }
 }
 
-TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,float tempminX,float tempminY,float tempminZ,float tempmaxX,float tempmaxY, float tempmaxZ){
-    float mX = tempminX;float mY = tempminY;float mZ = tempminZ;        // rename new boundary and cut it into four subregion
-    float MX = tempmaxX;float MY = tempmaxY;float MZ = tempmaxZ;
-    float midX = (mX + MX)/2.;float midY = (mY + MY)/2.;float midZ = (mZ + MZ)/2.;
+TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,double tempminX,double tempminY,double tempminZ,double tempmaxX,double tempmaxY, double tempmaxZ){
+    double mX = tempminX;double mY = tempminY;double mZ = tempminZ;        // rename new boundary and cut it into four subregion
+    double MX = tempmaxX;double MY = tempmaxY;double MZ = tempmaxZ;
+    double midX = (mX + MX)/2.;double midY = (mY + MY)/2.;double midZ = (mZ + MZ)/2.;
 
     bool firstPtlN = ptcTree1->ptclPtr->posi[1] > midY;                 // determine each Particle is in which part of subregion
     bool firstPtlE = ptcTree1->ptclPtr->posi[0] > midX;
@@ -215,10 +215,10 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,f
 void QuadrupleTree::Insert(Particle& newPtc){    
     std::queue<TreeNode*> q;                                        // store node in first-in-first-out order to search 
     TreeNode *current = root;
-    float tempMaxX{maxX};float tempMaxY{maxY};float tempMaxZ{maxZ}; // copy thw boundary of tree (as search gets deeper,
-    float tempMinX{minX};float tempMinY{minY};float tempMinZ{minZ}; // the boundary shrinks for determining which node should be search)
-    float tempMidX = (tempMaxX + tempMinX) / 2.;                    // mid-line of boundary (changes as boundary being changed)
-    float tempMidY = (tempMaxY + tempMinY) / 2.;
+    double tempMaxX{maxX};double tempMaxY{maxY};double tempMaxZ{maxZ}; // copy thw boundary of tree (as search gets deeper,
+    double tempMinX{minX};double tempMinY{minY};double tempMinZ{minZ}; // the boundary shrinks for determining which node should be search)
+    double tempMidX = (tempMaxX + tempMinX) / 2.;                    // mid-line of boundary (changes as boundary being changed)
+    double tempMidY = (tempMaxY + tempMinY) / 2.;
     while (current) {
         if (newPtc.posi[0] < (tempMidX) and newPtc.posi[1] > (tempMidY)){ // the new particle is in northwest subregion
             if (current->NW != NULL ){                  // if current node's child node NW already exists
@@ -375,12 +375,12 @@ void QuadrupleTree::Trim(TreeNode *Node){
         return;
     }
 }
-float *QuadrupleTree::Monople(TreeNode *Node){
+double *QuadrupleTree::Monople(TreeNode *Node){
     if (Node->monople != NULL)
     {   
         return Node->monople;
     }
-    float *monoParaPtr = new float;     // {mass, x, y, z}
+    double *monoParaPtr = new double;     // {mass, x, y, z}
     for (int i = 0; i < 3; i++){        // initialize the value which pointer point to
         *(monoParaPtr + i)= 0.;        
     }
@@ -392,7 +392,7 @@ float *QuadrupleTree::Monople(TreeNode *Node){
     }
     else{                               // if this node has children then compute the monople of children
         if(Node->NE != NULL){
-            float *monoNEptr = Monople(Node->NE);
+            double *monoNEptr = Monople(Node->NE);
             *monoParaPtr += *monoNEptr;
             *(monoParaPtr + 1) += *(monoNEptr + 1) * (*monoNEptr); // add center of mass times mass  
             *(monoParaPtr + 2) += *(monoNEptr + 2) * (*monoNEptr); // add center of mass times mass  
@@ -400,7 +400,7 @@ float *QuadrupleTree::Monople(TreeNode *Node){
             // delete[] monoNEptr;
         }
         if(Node->NW != NULL){
-            float *monoNWptr = Monople(Node->NW);
+            double *monoNWptr = Monople(Node->NW);
             *monoParaPtr += *monoNWptr;
             *(monoParaPtr + 1) += *(monoNWptr + 1) * (*monoNWptr); // add center of mass times mass  
             *(monoParaPtr + 2) += *(monoNWptr + 2) * (*monoNWptr); // add center of mass times mass  
@@ -408,7 +408,7 @@ float *QuadrupleTree::Monople(TreeNode *Node){
             // delete[] monoNWptr;
         }
         if(Node->SE != NULL){
-            float *monoSEptr = Monople(Node->SE);
+            double *monoSEptr = Monople(Node->SE);
             *monoParaPtr += *monoSEptr;
             *(monoParaPtr + 1) += *(monoSEptr + 1) * (*monoSEptr); // add center of mass times mass  
             *(monoParaPtr + 2) += *(monoSEptr + 2) * (*monoSEptr); // add center of mass times mass  
@@ -416,7 +416,7 @@ float *QuadrupleTree::Monople(TreeNode *Node){
             // delete[] monoSEptr;
         }
         if(Node->SW != NULL){
-            float *monoSWptr = Monople(Node->SW);
+            double *monoSWptr = Monople(Node->SW);
             *monoParaPtr += *monoSWptr;
             *(monoParaPtr + 1) += *(monoSWptr + 1) * (*monoSWptr); // add center of mass times mass  
             *(monoParaPtr + 2) += *(monoSWptr + 2) * (*monoSWptr); // add center of mass times mass  
@@ -435,8 +435,8 @@ float *QuadrupleTree::Monople(TreeNode *Node){
 //calculate the force(acceleration) acting from Node to the target particle
 std::vector<double> TreeNode::CalculateForce(TreeNode *Node, Particle &tarPtc){
 
-    float r{0};float a{0}; 
-    std::vector<float> acc{0., 0.};
+    double r{0};double a{0}; 
+    std::vector<double> acc{0., 0.};
     // r is the distance between the Node and the particle
     r = sqrtf((tarPtc.posi[0] - *(Node->monople +1))*(tarPtc.posi[0] - *(Node->monople +1))+(tarPtc.posi[1] - *(Node->monople +2))*(tarPtc.posi[1] - *(Node->monople +2)));
     // a is the acceleration of the particle using the Newton's law
@@ -452,10 +452,10 @@ std::vector<double> TreeNode::CalculateForce(TreeNode *Node, Particle &tarPtc){
 void QuadrupleTree::TotalForce(Particle &Ptc){
     std::queue<TreeNode*> q;
     TreeNode *current = root;
-    std::vector<float> accSum {0.0, 0.0}; // the sum of acceleration, including x and y components
+    std::vector<double> accSum {0.0, 0.0}; // the sum of acceleration, including x and y components
     std::vector<TreeNode*>section; // change NE, NW, SE, SW into a vector to use for-loop
-    std::vector<float> acc; // to store the computing acceleration
-    float r{0};float d{0};
+    std::vector<double> acc; // to store the computing acceleration
+    double r{0};double d{0};
     while (current){
         r = sqrtf((Ptc.posi[0] - *(current->monople +1))*(Ptc.posi[0] - *(current->monople +1))+(Ptc.posi[1] - *(current->monople +2))*(Ptc.posi[1] - *(current->monople +2)));
         d = (maxX  - minX) / powf(2.0f, (current->level) * 1.0f);
@@ -551,7 +551,7 @@ double calculate_system_energy(const std::vector<Particle>& particles) {
             double dx = other_p.posi[0] - p.posi[0];
             double dy = other_p.posi[1] - p.posi[1];
             double distance = std::sqrt(dx*dx + dy*dy);
-            double potential_energy = -G * p.mass * other_p.mass / distance;
+            double potential_energy = -G_CONST * p.mass * other_p.mass / distance;
             total_potential_energy += potential_energy;
         }
     }
