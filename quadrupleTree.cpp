@@ -3,37 +3,47 @@
 #include <queue>
 #include <vector>
 #include <cmath>
-
 #include <iomanip>
+#include "orbit_integration.h"
+#include "quadrupleTree.h"
 //constant setting
-#define THETA 1.0
-#define G_CONST 6.67428e-11
-struct Particle{
-    std::vector<double> posi;
-    std::vector<double> velocity;
-    std::vector<double> acceleration;
+// #define THETA 1.0
 
-    double mass;
-};
 
-class QuadrupleTree;
-class TreeNode{
-// private:
-public:                                // set all of parameter be public for testing. you should only access all those parameters by function in QuadrupleTree.
-    TreeNode *parent;                  // point to the parent node
-    TreeNode *NW;                      // northwest child node
-    TreeNode *NE;                      // northeast child node
-    TreeNode *SW;                      // southwest child node
-    TreeNode *SE;                      // southeast child node
-    Particle *ptclPtr;                 // the pointer of single particle if this node is a leaf(without any child node), otherwise it's a null pointer.  
-    int level;                         // the depth level of this node (which is zero for root node)
-    bool leaf;                         // if leaf is true then this node is a leaf the point toward the particle is ptclPtr
-    double *monople;                    // storege the monople of all subtree
-    std::vector<double> CalculateForce(TreeNode *Node, Particle &tarPtc); //Compute the force(acceleration) acting from this node to a particle p
+QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ){                 
+    root = new TreeNode;                                  // allocate memory for root
+    maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
+    minX = mX; minY = mY; minZ = mZ; 
+    Insert(firstPtc);
+}
+QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
+    PtcVectorPtr = &Particles;
+    root = new TreeNode;                                  // allocate memory for root
+    maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
+    minX = mX; minY = mY; minZ = mZ;
+    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+        if(Particles[i].posi[0]>MX or Particles[i].posi[0]<mX or Particles[i].posi[1]>MY or Particles[i].posi[1]<mY){
+            std::cout<<"particle out of boundry";
+            std::exit(0);
+        }
+    }
+    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+        Insert(Particles[i]);
+    }
+    Monople(root);                                        //initialize all monople of nodes in whole tree
 
-    TreeNode():NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(false),ptclPtr{NULL},monople{NULL}{};                   // constuctor of TreeNode (which creats a TreeNode object and initialize parameters) 
-    TreeNode(Particle *newPtcl):NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(true),ptclPtr(newPtcl),monople{NULL}{};// constuctor of TreeNode which stores the particle's location into pointer and set leaf==true (since this node is a particle)
-    void PrintNode(){                                                                                    // print the information of node parent, self and children are the memeory locations of each node
+}
+QuadrupleTree::~QuadrupleTree(){
+    if (root != NULL){
+        if(root->NE != NULL){DeleteNode(root->NE); root->NE = NULL;};
+        if(root->NW != NULL){DeleteNode(root->NW); root->NW = NULL;};
+        if(root->SE != NULL){DeleteNode(root->SE); root->SE = NULL;};
+        if(root->SW != NULL){DeleteNode(root->SW); root->SW = NULL;};
+        // delete root;
+    }
+    PtcVectorPtr = NULL;
+}
+void TreeNode::PrintNode(){                                                                                    // print the information of node parent, self and children are the memeory locations of each node
         std::cout << "parent: " <<  parent <<  "\n";
         std::cout << "self: " <<  this <<  "\n";
         std::cout << "children: " <<"NW:"<< NW <<" NE:"<< NE <<" SW:"<< SW <<" SE:"<< SE << "\n";
@@ -50,58 +60,6 @@ public:                                // set all of parameter be public for tes
             std::cout << "\n\n";
             }
         };
-        friend class QuadrupleTree;   // give the QuadrupleTree class access to those private members(such as private functions and parameters)
-};
-
-class QuadrupleTree{
-private:
-    double minX{0};double minY{0};double minZ{0}; // the boundary of space (minimum and maximum of x,y,z of all particles)
-    double maxX{1};double maxY{1};double maxZ{1};
-    TreeNode *TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,double tempminX,double tempminY,double tempminZ,double tempmaxX,double tempmaxY, double tempmaxZ); 
-    // TwoParticleSubtree function creats a tree which connects two node particle,
-    // if a particle in the same region of existing particle in a node 
-    // in the original level of first particle
-public:
-    TreeNode *root;
-    QuadrupleTree():root(NULL){};
-    QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
-    QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
-    ~QuadrupleTree();                  // desturctor (to destroy the whole tree and release the memory space it takes)
-    void DeleteNode(TreeNode *Node);                      // delete the Node and its all descendent
-    void Insert(Particle& newPtc);                        // insert one particle in the tree
-    void Trim(TreeNode *Node);                            // delete all empty subnodes and itself if the input node turn out to be a empty (those node without any child and not a particle node)
-    double *Monople(TreeNode *Node);                       // return total mass and center of mass of this subtree: (mass, x, y, z) and initialize the monople at each tree (it don't modify any monople in the subtree, it just read it.)
-    void TotalForce(Particle &Ptc);                       // calculate the total force(acceleration) of a given particle
-    
-};
-QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ){                 
-    root = new TreeNode;                                  // allocate memory for root
-    maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
-    minX = mX; minY = mY; minZ = mZ; 
-    Insert(firstPtc);
-}
-QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
-    root = new TreeNode;                                  // allocate memory for root
-    maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
-    minX = mX; minY = mY; minZ = mZ;
-    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
-        Insert(Particles[i]);
-    }
-    Monople(root);                                        //initialize all monople of nodes in whole tree
-    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
-        TotalForce(Particles[i]);
-    }
-}
-QuadrupleTree::~QuadrupleTree(){
-    if (root != NULL){
-        if(root->NE != NULL){DeleteNode(root->NE); root->NE = NULL;};
-        if(root->NW != NULL){DeleteNode(root->NW); root->NW = NULL;};
-        if(root->SE != NULL){DeleteNode(root->SE); root->SE = NULL;};
-        if(root->SW != NULL){DeleteNode(root->SW); root->SW = NULL;};
-        // delete root;
-    }
-}
-
 TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,double tempminX,double tempminY,double tempminZ,double tempmaxX,double tempmaxY, double tempmaxZ){
     double mX = tempminX;double mY = tempminY;double mZ = tempminZ;        // rename new boundary and cut it into four subregion
     double MX = tempmaxX;double MY = tempmaxY;double MZ = tempmaxZ;
@@ -457,6 +415,14 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
     std::vector<double> acc; // to store the computing acceleration
     double r{0};double d{0};
     while (current){
+        if (current->leaf==true and current->ptclPtr == &Ptc){
+            if (q.empty() == false){
+            current = q.front();
+            q.pop();
+            }
+            else{break;}
+            continue;
+        }
         r = sqrt((Ptc.posi[0] - *(current->monople +1))*(Ptc.posi[0] - *(current->monople +1))+(Ptc.posi[1] - *(current->monople +2))*(Ptc.posi[1] - *(current->monople +2)));
         d = (maxX  - minX) / pow(2.0, (current->level) * 1.0);
         // this is the node where the particle itself exists
@@ -489,109 +455,21 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
                 section.clear();
             }
         }
-        current = q.front();
-        q.pop();
+        if (q.empty() == false){
+            current = q.front();
+            q.pop();
+        }
+        else{break;}
     }
-
     Ptc.acceleration[0] = accSum[0];
     Ptc.acceleration[1] = accSum[1];
     return;
 }
-
-void calculate_gravity(std::vector<Particle>& particles, double G) {
-    for (auto& p1 : particles) {
-        for (auto& p2 : particles) {
-            if (&p1 == &p2) {
-                continue; // Skip self-interaction
-            }
-            // Calculate distance between particles
-            double dx = p2.posi[0] - p1.posi[0];
-            double dy = p2.posi[1] - p1.posi[1];
-            double dist_squared = dx * dx + dy * dy;
-            double dist_cubed = dist_squared * std::sqrt(dist_squared);
-
-            // Calculate gravitational force
-            double force_magnitude = G * p1.mass * p2.mass / dist_cubed;
-            double force_x = force_magnitude * dx;
-            double force_y = force_magnitude * dy;
-
-            // Update particle accelerations
-            p1.acceleration[0] += force_x / p1.mass;
-            p1.acceleration[1] += force_y / p1.mass;
-        }
+void QuadrupleTree::TreeForce(){
+    for (int i = 0; i < PtcVectorPtr->size(); i++){           
+        TotalForce((*PtcVectorPtr)[i]);
     }
-}
-
-std::vector<double> calculate_system_momentum(const std::vector<Particle>& particles) {
-    std::vector<double> system_momentum(2, 0.0);
-    for (const auto& p : particles) {
-        system_momentum[0] += p.mass * p.velocity[0];
-        system_momentum[1] += p.mass * p.velocity[1];
-    }
-    return system_momentum;
-}
+};
 
 
 
-double calculate_system_energy(const std::vector<Particle>& particles) {
-  double total_kinetic_energy = 0.0;
-  double total_potential_energy = 0.0;
-  
-    for (const auto& p : particles) {
-        // Calculate kinetic energy
-        double speed_squared = p.velocity[0]*p.velocity[0] + p.velocity[1]*p.velocity[1];
-        double kinetic_energy = 0.5 * p.mass * speed_squared;
-        total_kinetic_energy += kinetic_energy;
-
-        // Calculate potential energy
-        for (const auto& other_p : particles) {
-            if (&p == &other_p) {
-                continue;
-            }
-            double dx = other_p.posi[0] - p.posi[0];
-            double dy = other_p.posi[1] - p.posi[1];
-            double distance = std::sqrt(dx*dx + dy*dy);
-            double potential_energy = -G_CONST * p.mass * other_p.mass / distance;
-            total_potential_energy += potential_energy;
-        }
-    }
-
-    return total_kinetic_energy + total_potential_energy;
-}
-
-// main function is for testing
-int main() {
-    Particle a;
-    a.posi = {1.,6.,4.};
-    a.velocity = {4.,3.,2.};
-    a.mass = {12.};
-    a.acceleration = {0., 0., 0.};
-    Particle b;
-    b.posi = {2.,7.,8.};
-    b.velocity = {1.,6.,7.};
-    b.mass = {23.};
-    b.acceleration = {0., 0., 0.};
-    Particle c;
-    c.posi = {3.,5.,8.};
-    c.velocity = {1.,6.,7.};
-    c.mass = {212.};
-    c.acceleration = {0., 0., 0.};
-    Particle d;
-    d.posi = {4.,6.,8.};
-    d.velocity = {8.,6.,7.};
-    d.mass = {62.};
-    d.acceleration = {0., 0., 0.};
-    
-    std::vector<Particle> Pvec = {a,b,c,d};
-    QuadrupleTree T(Pvec,0.,0.,0.,10.,10.,10.); 
-    
-    T.root->PrintNode();
-    T.root->SW->PrintNode();
-    T.root->NW->PrintNode();
-    T.root->NW->SE->PrintNode();
-    T.root->NW->SW->PrintNode();
-    T.root->NW->SW->SW->PrintNode();
-    T.root->NW->SW->NE->PrintNode();
-    T.root->NW->PrintNode();
-    return 0;
-}
