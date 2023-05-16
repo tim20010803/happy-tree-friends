@@ -438,7 +438,7 @@ std::vector<double> TreeNode::CalculateForce(TreeNode *Node, Particle &tarPtc){
     double r{0};double a{0}; 
     std::vector<double> acc{0., 0.};
     // r is the distance between the Node and the particle
-    r = sqrtf((tarPtc.posi[0] - *(Node->monople +1))*(tarPtc.posi[0] - *(Node->monople +1))+(tarPtc.posi[1] - *(Node->monople +2))*(tarPtc.posi[1] - *(Node->monople +2)));
+    r = sqrt((tarPtc.posi[0] - *(Node->monople +1))*(tarPtc.posi[0] - *(Node->monople +1))+(tarPtc.posi[1] - *(Node->monople +2))*(tarPtc.posi[1] - *(Node->monople +2)));
     // a is the acceleration of the particle using the Newton's law
     // a is divided by one more r because the next step is divided by one less r
     a = G_CONST * *(Node->monople) / (r * r * r);
@@ -457,8 +457,8 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
     std::vector<double> acc; // to store the computing acceleration
     double r{0};double d{0};
     while (current){
-        r = sqrtf((Ptc.posi[0] - *(current->monople +1))*(Ptc.posi[0] - *(current->monople +1))+(Ptc.posi[1] - *(current->monople +2))*(Ptc.posi[1] - *(current->monople +2)));
-        d = (maxX  - minX) / powf(2.0f, (current->level) * 1.0f);
+        r = sqrt((Ptc.posi[0] - *(current->monople +1))*(Ptc.posi[0] - *(current->monople +1))+(Ptc.posi[1] - *(current->monople +2))*(Ptc.posi[1] - *(current->monople +2)));
+        d = (maxX  - minX) / pow(2.0, (current->level) * 1.0);
         // this is the node where the particle itself exists
         if (r <= 0){
             break; 
