@@ -38,6 +38,21 @@ std::vector<double> calculate_system_momentum(const std::vector<Particle>& parti
     return system_momentum;
 }
 
+std::vector<double> calculate_system_angular_momentum(const std::vector<Particle>& particles) {
+    std::vector<double> system_angular_momentum(1, 0.0);
+
+    for (const auto& p : particles) {
+        // Calculate the angular momentum for each particle in 2D
+        double angular_momentum = p.mass * (p.posi[0] * p.velocity[1] - p.posi[1] * p.velocity[0]);
+
+        // Add the particle's angular momentum to the system's angular momentum
+        system_angular_momentum[0] += angular_momentum;
+    }
+
+    return system_angular_momentum;
+}
+
+
 double calculate_system_energy(const std::vector<Particle>& particles) {
   double total_kinetic_energy = 0.0;
   double total_potential_energy = 0.0;
