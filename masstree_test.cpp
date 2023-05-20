@@ -227,6 +227,7 @@ int main() {
         {{0.0, 1.0}, {pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000},
         {{0.0, -1.0}, {-pow(G*1000000000,0.5)/2., 0.0}, {0.0, 0.0}, 1000000000}
     };
+    
     calculate_gravity(particles, G);
     for (int i = 0; i <= num_steps; i++) {
         Verlet_velocity(particles, G, dt);
@@ -248,6 +249,8 @@ int main() {
         std::cout << "System energy: " << system_energy << std::endl;
         */
     }
+
+    
     std::vector<double> system_momentum = calculate_system_momentum(particles);
     double system_energy = calculate_system_energy(particles, G);
     std::cout << "Verlet_velocity Time: " << (num_steps)*dt << std::endl;
