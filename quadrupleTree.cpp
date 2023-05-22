@@ -415,16 +415,8 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
     std::vector<double> acc; // to store the computing acceleration
     double r{0};double d{0};
     while (current){
-        if (current->leaf==true and current->ptclPtr == &Ptc){
-            if (q.empty() == false){
-            current = q.front();
-            q.pop();
-            }
-            else{break;}
-            continue;
-        }
-        r = sqrt((Ptc.posi[0] - *(current->monople +1))*(Ptc.posi[0] - *(current->monople +1))+(Ptc.posi[1] - *(current->monople +2))*(Ptc.posi[1] - *(current->monople +2)));
-        d = (maxX  - minX) / pow(2.0, (current->level) * 1.0);
+        r = sqrtf((Ptc.posi[0] - *(current->monople +1))*(Ptc.posi[0] - *(current->monople +1))+(Ptc.posi[1] - *(current->monople +2))*(Ptc.posi[1] - *(current->monople +2)));
+        d = (maxX  - minX) / powf(2.0f, (current->level) * 1.0f);
         // this is the node where the particle itself exists
         if (r <= 0){
             break; 
@@ -432,13 +424,17 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
         // test if Multipole-Acceptance-Criterion(MAC) can be used in this node
         if (current->leaf == true){
             acc = current->CalculateForce(current, Ptc); // directly calculate the force(acceleration)
+# pragma omp atomic
             accSum[0] += acc[0]; // x component
+# pragma omp atomic
             accSum[1] += acc[1]; // y component
         }
         else{
             if (d / r <= THETA){
                 acc = current->CalculateForce(current, Ptc); // calculate the force(acceleration)
+# pragma omp atomic
                 accSum[0] += acc[0]; // x component
+# pragma omp atomic
                 accSum[1] += acc[1]; // y component
             }
             else{
@@ -447,19 +443,25 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
                 section.push_back(current->SE);
                 section.push_back(current->SW);
                 // look down and check if MAC can be used in the children nodes
+# pragma omp parallel for
                 for (int i = 0; i < 4; i++){
                     if(section[i] != NULL){
+# pragma omp critical
                         q.push(section[i]);
                     }
                 }
                 section.clear();
             }
         }
-        if (q.empty() == false){
-            current = q.front();
-            q.pop();
+# pragma omp critical
+        {
+            if (!q.empty()) {
+                current = q.front();
+                q.pop();
+            } else {
+                break;
+            }
         }
-        else{break;}
     }
     Ptc.acceleration[0] = accSum[0];
     Ptc.acceleration[1] = accSum[1];
