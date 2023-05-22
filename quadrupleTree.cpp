@@ -466,8 +466,10 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
     return;
 }
 void QuadrupleTree::TreeForce(){
+# pragma omp parallel for{
     for (int i = 0; i < PtcVectorPtr->size(); i++){           
         TotalForce((*PtcVectorPtr)[i]);
+        }
     }
 };
 
