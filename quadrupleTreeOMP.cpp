@@ -4,19 +4,21 @@
 #include <vector>
 #include <cmath>
 #include <iomanip>
+#include <omp.h>
 #include "orbit_integration.h"
 #include "quadrupleTree.h"
 //constant setting
 // #define THETA 1.0
+int NThread = 8;
+int particleQuadrant(Particle p,double mX,double mY,double mZ,double MX,double MY, double MZ){
+    double midX=(MX+mX/2.);
+    double midY=(MY+mY/2.);
+    if (p.posi[0]>midX and p.posi[1]>midY){return 1;}
+    else if (p.posi[0]<midX and p.posi[1]>midY){return 2;}
+    else if (p.posi[0]<midX and p.posi[1]<midY){return 3;}
+    else if (p.posi[0]>midX and p.posi[1]<midY){return 4;}
+}
 
-// TreeNode::~TreeNode(){
-//     if(NE != NULL){(delete NE);NE = NULL;};
-//     if(NW != NULL){(delete NW);NW = NULL;};
-//     if(SE != NULL){(delete SE);SE = NULL;};
-//     if(SW != NULL){(delete SW);SW = NULL;};
-//     // if(ptclPtr != NULL){(delete ptclPtr);ptclPtr = NULL;};
-//     if(monople != NULL){(delete monople);monople = NULL;};
-// }
 QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ){                 
     root = new TreeNode;                                  // allocate memory for root
     maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
@@ -34,7 +36,22 @@ QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double m
             std::exit(0);
         }
     }
+    // # pragma omp parallel for
     for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+    // const int tid = omp_get_thread_num();
+        // int quadrant = particleQuadrant(Particles[i],mX,mY,mZ,MX,MY,MZ);
+        // if (tid%4==0 and quadrant==0){
+        //     Insert(Particles[i]);
+        // }
+        // else if (tid%4==1 and quadrant==1){
+        //     Insert(Particles[i]);
+        // }
+        // else if (tid%4==2 and quadrant==2){
+        //     Insert(Particles[i]);
+        // }
+        // else if (tid%4==3 and quadrant==3){
+        //     Insert(Particles[i]);
+        // }
         Insert(Particles[i]);
     }
     Monople(root);                                        //initialize all monople of nodes in whole tree
@@ -184,8 +201,10 @@ void QuadrupleTree::Insert(Particle& newPtc){
     double tempMinX{minX};double tempMinY{minY};double tempMinZ{minZ}; // the boundary shrinks for determining which node should be search)
     double tempMidX = (tempMaxX + tempMinX) / 2.;                    // mid-line of boundary (changes as boundary being changed)
     double tempMidY = (tempMaxY + tempMinY) / 2.;
+    omp_set_nested(0);
+
     while (current) {
-        if (newPtc.posi[0] < (tempMidX) and newPtc.posi[1] > (tempMidY)){ // the new particle is in northwest subregion
+        if (newPtc.posi[0] < (tempMidX) and newPtc.posi[1] > (tempMidY) ){ // the new particle is in northwest subregion
             if (current->NW != NULL ){                  // if current node's child node NW already exists
                 if (current->NW->leaf == false){        // if this child node is not leaf (which means it's not a particle node and current node has grandchild) 
                     q.push(current->NW);                // push it to the tail of queue (search will continue, starting from this node)
@@ -307,18 +326,10 @@ void QuadrupleTree::DeleteNode(TreeNode *Node){
         if(Node->parent->NW == Node){Node->parent->NW = NULL;};
         if(Node->parent->SE == Node){Node->parent->SE = NULL;};
         if(Node->parent->SW == Node){Node->parent->SW = NULL;};
-        int parentChildNum = 0;
-        if(Node->parent->NE != NULL){parentChildNum +=1; };
-        if(Node->parent->NW != NULL){parentChildNum +=1; };
-        if(Node->parent->SE != NULL){parentChildNum +=1; };
-        if(Node->parent->SW != NULL){parentChildNum +=1; };
-        if(parentChildNum == 0){Node->parent->leaf = true;}
     }
     if (Node->leaf){            // if the node is a particle node, disconnect to particle and delete self
-       
-        // delete Node->ptclPtr;
-        // Node->ptclPtr = NULL;
-        // delete Node->monople;
+        Node->ptclPtr = NULL;
+        delete Node->monople;
         delete Node;
         return;
     }
@@ -327,8 +338,8 @@ void QuadrupleTree::DeleteNode(TreeNode *Node){
         if(Node->NW != NULL){DeleteNode(Node->NW);};
         if(Node->SE != NULL){DeleteNode(Node->SE);};
         if(Node->SW != NULL){DeleteNode(Node->SW);};
-        // delete Node->monople;
-        // Node->monople = NULL;
+        delete Node->monople;
+        Node->monople = NULL;
         delete Node;
         return;
     }
@@ -364,7 +375,11 @@ double *QuadrupleTree::Monople(TreeNode *Node){
         // *(monoParaPtr + 3) = Node->ptclPtr->posi[2]; // for z direction 
     }
     else{                               // if this node has children then compute the monople of children
-        if(Node->NE != NULL){
+    // #     pragma omp parallel
+    {
+
+        const int tid = omp_get_thread_num();
+        if(Node->NE != NULL ){
             double *monoNEptr = Monople(Node->NE);
             *monoParaPtr += *monoNEptr;
             *(monoParaPtr + 1) += *(monoNEptr + 1) * (*monoNEptr); // add center of mass times mass  
@@ -372,7 +387,7 @@ double *QuadrupleTree::Monople(TreeNode *Node){
             // *(monoParaPtr + 3) += *(monoNEptr + 3) * (*monoNEptr); // add center of mass times mass  
             // delete[] monoNEptr;
         }
-        if(Node->NW != NULL){
+        if(Node->NW != NULL ){
             double *monoNWptr = Monople(Node->NW);
             *monoParaPtr += *monoNWptr;
             *(monoParaPtr + 1) += *(monoNWptr + 1) * (*monoNWptr); // add center of mass times mass  
@@ -380,7 +395,7 @@ double *QuadrupleTree::Monople(TreeNode *Node){
             // *(monoParaPtr + 3) += *(monoNWptr + 3) * (*monoNWptr); // add center of mass times mass  
             // delete[] monoNWptr;
         }
-        if(Node->SE != NULL){
+        if(Node->SE != NULL ){
             double *monoSEptr = Monople(Node->SE);
             *monoParaPtr += *monoSEptr;
             *(monoParaPtr + 1) += *(monoSEptr + 1) * (*monoSEptr); // add center of mass times mass  
@@ -388,13 +403,14 @@ double *QuadrupleTree::Monople(TreeNode *Node){
             // *(monoParaPtr + 3) += *(monoSEptr + 3) * (*monoSEptr); // add center of mass times mass  
             // delete[] monoSEptr;
         }
-        if(Node->SW != NULL){
+        if(Node->SW != NULL ){
             double *monoSWptr = Monople(Node->SW);
             *monoParaPtr += *monoSWptr;
             *(monoParaPtr + 1) += *(monoSWptr + 1) * (*monoSWptr); // add center of mass times mass  
             *(monoParaPtr + 2) += *(monoSWptr + 2) * (*monoSWptr); // add center of mass times mass  
             // *(monoParaPtr + 3) += *(monoSWptr + 3) * (*monoSWptr); // add center of mass times mass  
             // delete[] monoSWptr;
+        }
         }
         for (int i = 1; i < 3; i++){        // normalize center of mass with total mass
             *(monoParaPtr + i) /= (*monoParaPtr);        
@@ -481,6 +497,8 @@ void QuadrupleTree::TotalForce(Particle &Ptc){
     return;
 }
 void QuadrupleTree::TreeForce(){
+    omp_set_num_threads( NThread );
+#       pragma omp parallel for
     for (int i = 0; i < PtcVectorPtr->size(); i++){           
         TotalForce((*PtcVectorPtr)[i]);
     }

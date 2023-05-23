@@ -3,10 +3,11 @@
 #include <queue>
 #include <vector>
 #include <cmath>
+#include <ctime>
 #include <iomanip>
 #include "orbit_integration.h"
 #include "quadrupleTree.h"
-
+#include <omp.h>
 void calculate_gravity(std::vector<Particle>& particles, double G) {
     for (auto& p1 : particles) {
         for (auto& p2 : particles) {
@@ -66,6 +67,9 @@ double calculate_system_energy(const std::vector<Particle>& particles) {
 }
 // main function is for testing
 int main() {
+    clock_t start_t, end_t;
+    // double starttime =omp_get_wtime();
+    start_t = clock();
     Particle a;
     a.posi = {1.,6.,4.};
     a.velocity = {4.,3.,2.};
@@ -86,25 +90,42 @@ int main() {
     d.velocity = {8.,6.,7.};
     d.mass = {62.};
     d.acceleration = {0., 0., 0.};
-    
     std::vector<Particle> Pvec = {a,b,c,d};
-    QuadrupleTree T(Pvec,-10000.,-10000.,-10000.,10000.,10000.,10000.); 
+    const int particleNum = 100;//11.653364000000secondsif100
+    for (int i = 0; i < particleNum-4; i++){
+        Particle a;
+        double rand3[3]={0};
+        for (int j = 0; j < 3; j++){
+            rand3[j] = static_cast<double>(rand() % 1000)/100.;
+        }
+        a.posi = {rand3[0],rand3[1],rand3[2]};
+        for (int j = 0; j < 3; j++){
+            rand3[j] = static_cast<double>(rand() % 1000)/100.;
+        }
+        a.velocity = {rand3[0],rand3[1],rand3[2]};
+        a.mass = static_cast<double>(rand() % 1000)/10.;
+        a.acceleration={0.,0.,0.};
+        Pvec.push_back(a);
+    }
     
-    // T.root->PrintNode();
-    // T.root->SW->PrintNode();
-    // T.root->NW->PrintNode();
-    // T.root->NW->SE->PrintNode();
-    // T.root->NW->SW->PrintNode();
-    // T.root->NW->SW->SW->PrintNode();
-    // T.root->NW->SW->NE->PrintNode();
-    // T.root->NW->PrintNode();
+    
+    QuadrupleTree T(Pvec,-10000.,-10000.,-10000.,10000.,10000.,10000.); 
+    for (int i = 0; i < Pvec.size(); i++)
+    {
+        std::cout << "Particle mass: " << Pvec[i].mass << std::endl;
+        std::cout << "Particle position: " << Pvec[i].posi[0] << ", " << Pvec[i].posi[1] << std::endl;
+        std::cout << "Particle velocity: " << Pvec[i].velocity[0] << ", " << Pvec[i].velocity[1] << std::endl;
+        std::cout << "Particle acceleration: " << Pvec[i].acceleration[0] << ", " << Pvec[i].acceleration[1] << std::endl;
 
+    }
+    
+    
   
     std::cout << std::fixed << std::setprecision(12);
 
     std::vector<Particle> particles = Pvec;
     // Input time and time step
-    double t=40.*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
+    double t=0.4*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
 
     // Perform simulation
     int num_steps = t / dt;
@@ -118,10 +139,11 @@ int main() {
 
         // std::cout<<i<<"\n";
     }
-
+    end_t = clock();
     std::vector<double> system_momentum = calculate_system_momentum(particles);
     double system_energy = calculate_system_energy(particles);
-
+    // double endtime =omp_get_wtime();
+    double total_t = static_cast<double>(end_t - start_t) / CLOCKS_PER_SEC;
     std::cout << "AB Time: " << (num_steps)*dt << std::endl;
     std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
     std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
@@ -133,6 +155,7 @@ int main() {
     std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
     std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
     std::cout << "System energy: " << system_energy << std::endl;
-
+    std::cout << total_t <<  "seconds"<< std::endl;
+    std::cout << particleNum <<  "particles"<< std::endl;
     return 0;
 }
