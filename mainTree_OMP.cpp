@@ -4,15 +4,19 @@
 #include <vector>
 #include <cmath>
 #include <iomanip>
-#include "orbit_integration.h"
+#include "orbit_integration_OMP.h"
 #include "quadrupleTree.h"
 
 void calculate_gravity(std::vector<Particle>& particles, double G) {
-    for (auto& p1 : particles) {
-        for (auto& p2 : particles) {
-            if (&p1 == &p2) {
+    #pragma omp parallel for
+    for (int i = 0; i < particles.size(); i++) {
+        Particle& p1 = particles[i];
+        for (int j = 0; j < particles.size(); j++) {
+            if (i == j) {
                 continue; // Skip self-interaction
             }
+            Particle& p2 = particles[j];
+            
             // Calculate distance between particles
             double dx = p2.posi[0] - p1.posi[0];
             double dy = p2.posi[1] - p1.posi[1];
@@ -25,59 +29,80 @@ void calculate_gravity(std::vector<Particle>& particles, double G) {
             double force_y = force_magnitude * dy;
 
             // Update particle accelerations
+            #pragma omp atomic
             p1.acceleration[0] += force_x / p1.mass;
+            #pragma omp atomic
             p1.acceleration[1] += force_y / p1.mass;
         }
     }
 }
+
+// 自定义reduction运算符：向量相加
+#pragma omp declare reduction(vec_double_plus : std::vector<double> : \
+    std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<double>())) \
+    initializer(omp_priv = decltype(omp_orig)(omp_orig.size(), 0.0))
+
+// 计算系统动量
 std::vector<double> calculate_system_momentum(const std::vector<Particle>& particles) {
     std::vector<double> system_momentum(2, 0.0);
-    for (const auto& p : particles) {
-        system_momentum[0] += p.mass * p.velocity[0];
-        system_momentum[1] += p.mass * p.velocity[1];
+
+    #pragma omp parallel for reduction(vec_double_plus:system_momentum)
+    for (int i = 0; i < particles.size(); ++i) {
+        const Particle& particle = particles[i];
+        system_momentum[0] += particle.mass * particle.velocity[0];
+        system_momentum[1] += particle.mass * particle.velocity[1];
     }
+
     return system_momentum;
 }
 
+// 计算系统角动量
 std::vector<double> calculate_system_angular_momentum(const std::vector<Particle>& particles) {
     std::vector<double> system_angular_momentum(1, 0.0);
 
-    for (const auto& p : particles) {
-        // Calculate the angular momentum for each particle in 2D
-        double angular_momentum = p.mass * (p.posi[0] * p.velocity[1] - p.posi[1] * p.velocity[0]);
-
-        // Add the particle's angular momentum to the system's angular momentum
-        system_angular_momentum[0] += angular_momentum;
+    #pragma omp parallel for reduction(vec_double_plus:system_angular_momentum)
+    for (int i = 0; i < particles.size(); ++i) {
+        const Particle& particle = particles[i];
+        system_angular_momentum[0] += particle.mass * (particle.posi[0] * particle.velocity[1] - particle.posi[1] * particle.velocity[0]);
     }
 
     return system_angular_momentum;
 }
 
-double calculate_system_energy(const std::vector<Particle>& particles) {
-  double total_kinetic_energy = 0.0;
-  double total_potential_energy = 0.0;
-  
-    for (const auto& p : particles) {
+
+double calculate_system_energy(const std::vector<Particle>& particles, double G) {
+    double total_kinetic_energy = 0.0;
+    double total_potential_energy = 0.0;
+
+    #pragma omp parallel for reduction(+:total_kinetic_energy, total_potential_energy)
+    for (size_t i = 0; i < particles.size(); i++) {
+        const auto& p = particles[i];
+
         // Calculate kinetic energy
-        double speed_squared = p.velocity[0]*p.velocity[0] + p.velocity[1]*p.velocity[1];
+        double speed_squared = p.velocity[0] * p.velocity[0] + p.velocity[1] * p.velocity[1];
         double kinetic_energy = 0.5 * p.mass * speed_squared;
+        #pragma omp atomic
         total_kinetic_energy += kinetic_energy;
 
         // Calculate potential energy
-        for (const auto& other_p : particles) {
-            if (&p == &other_p) {
+        for (size_t j = 0; j < particles.size(); j++) {
+            if (i == j) {
                 continue;
             }
+
+            const auto& other_p = particles[j];
             double dx = other_p.posi[0] - p.posi[0];
             double dy = other_p.posi[1] - p.posi[1];
-            double distance = std::sqrt(dx*dx + dy*dy);
-            double potential_energy = -G_CONST * p.mass * other_p.mass / distance;
+            double distance = std::sqrt(dx * dx + dy * dy);
+            double potential_energy = -G * p.mass * other_p.mass / distance;
+            #pragma omp atomic
             total_potential_energy += potential_energy;
         }
     }
 
     return total_kinetic_energy + total_potential_energy;
 }
+
 // main function is for testing
 int main() {
     Particle a;
@@ -134,7 +159,7 @@ int main() {
     }
 
     std::vector<double> system_momentum = calculate_system_momentum(particles);
-    double system_energy = calculate_system_energy(particles);
+    double system_energy = calculate_system_energy(particles, G_CONST);
 
     std::cout << "AB Time: " << (num_steps)*dt << std::endl;
     std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
