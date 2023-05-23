@@ -91,7 +91,7 @@ int main() {
     d.mass = {62.};
     d.acceleration = {0., 0., 0.};
     std::vector<Particle> Pvec = {a,b,c,d};
-    const int particleNum = 100;//11.653364000000secondsif100
+    const int particleNum = 700;//11.653364000000secondsif100
     for (int i = 0; i < particleNum-4; i++){
         Particle a;
         double rand3[3]={0};
