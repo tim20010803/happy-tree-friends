@@ -9,16 +9,24 @@
 //constant setting
 // #define THETA 1.0
 
-// TreeNode::~TreeNode(){
-//     if(NE != NULL){(delete NE);NE = NULL;};
-//     if(NW != NULL){(delete NW);NW = NULL;};
-//     if(SE != NULL){(delete SE);SE = NULL;};
-//     if(SW != NULL){(delete SW);SW = NULL;};
-//     // if(ptclPtr != NULL){(delete ptclPtr);ptclPtr = NULL;};
-//     if(monople != NULL){(delete monople);monople = NULL;};
-// }
+TreeNode::~TreeNode(){
+    if(parent!=0 and level>0){
+        if(parent->NE == this){ parent->NE = NULL;};
+        if(parent->NW == this){ parent->NW = NULL;};
+        if(parent->SE == this){ parent->SE = NULL;};
+        if(parent->SW == this){ parent->SW = NULL;};
+        parent = NULL;};
+    if(NE != NULL){(delete NE);NE = NULL;};
+    if(NW != NULL){(delete NW);NW = NULL;};
+    if(SE != NULL){(delete SE);SE = NULL;};
+    if(SW != NULL){(delete SW);SW = NULL;};
+    if(ptclPtr != NULL){ptclPtr = NULL;};
+    if(monople != NULL){(delete monople);monople = NULL;};
+}
 QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ){                 
     root = new TreeNode;                                  // allocate memory for root
+    root->parent = nullptr;
+    root->level =0;
     maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
     minX = mX; minY = mY; minZ = mZ; 
     Insert(firstPtc);
@@ -26,6 +34,8 @@ QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,do
 QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
     PtcVectorPtr = &Particles;
     root = new TreeNode;                                  // allocate memory for root
+    root->parent = nullptr;
+    root->level =0;
     maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
     minX = mX; minY = mY; minZ = mZ;
     for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
@@ -41,13 +51,24 @@ QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double m
 
 }
 QuadrupleTree::~QuadrupleTree(){
-    if (root != NULL){
-        if(root->NE != NULL){DeleteNode(root->NE); root->NE = NULL;};
-        if(root->NW != NULL){DeleteNode(root->NW); root->NW = NULL;};
-        if(root->SE != NULL){DeleteNode(root->SE); root->SE = NULL;};
-        if(root->SW != NULL){DeleteNode(root->SW); root->SW = NULL;};
-        // delete root;
+    // if (root != NULL){
+    //     if(root->NE != NULL){DeleteNode(root->NE); root->NE = NULL;};
+    //     if(root->NW != NULL){DeleteNode(root->NW); root->NW = NULL;};
+    //     if(root->SE != NULL){DeleteNode(root->SE); root->SE = NULL;};
+    //     if(root->SW != NULL){DeleteNode(root->SW); root->SW = NULL;};
+    //     // delete root;
+    // }
+    // if(root->NE != NULL){delete root->NE ;root->NE = NULL;};
+    // if(root->NW != NULL){delete root->NW ;root->NE = NULL;};
+    // if(root->SE != NULL){delete root->SE ;root->NE = NULL;};
+    // if(root->SW != NULL){delete root->SW ;root->NE = NULL;};
+    if (root!=nullptr)
+    {
+        delete root;
     }
+    
+    
+    root=nullptr;
     PtcVectorPtr = NULL;
 }
 void TreeNode::PrintNode(){                                                                                    // print the information of node parent, self and children are the memeory locations of each node
@@ -192,8 +213,9 @@ void QuadrupleTree::Insert(Particle& newPtc){
                     current->leaf = false;              // mark that current node is not a particle
                 }
                 else{                                   // current node's child(NW) is a particle node(two particle are in the same region in this level)
-                    current->NW = TwoParticleSubtree(current->NW, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->NW; // creat a subtree contains both particles and connect it to the original node
-                    delete  current->NW->parent;
+                    TreeNode *tempNode = TwoParticleSubtree(current->NW, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->NW; // creat a subtree contains both particles and connect it to the original node
+                    // delete  current->NW->parent;
+                    current->NW = tempNode;
                     current->NW->parent = current;
                     break;
                 }
@@ -217,8 +239,9 @@ void QuadrupleTree::Insert(Particle& newPtc){
                     current->leaf = false;              // mark that current node is not a particle
                 }
                 else{                                   // current node's child(NE) is a particle node(two particle are in the same region in this level)
-                    current->NE = TwoParticleSubtree(current->NE, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->NE; // creat a subtree contains both particles and connect it to the original node
-                    delete  current->NE->parent;
+                    TreeNode *tempNode = TwoParticleSubtree(current->NE, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->NE; // creat a subtree contains both particles and connect it to the original node
+                    // delete  current->NE->parent;
+                    current->NE = tempNode;
                     current->NE->parent = current;
                     break;
                 }
@@ -242,8 +265,9 @@ void QuadrupleTree::Insert(Particle& newPtc){
                     current->leaf = false;              // mark that current node is not a particle
                 }
                 else{                                   // current node's child(SW) is a particle node(two particle are in the same region in this level)
-                    current->SW = TwoParticleSubtree(current->SW, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->SW; // creat a subtree contains both particles and connect it to the original node
-                    delete  current->SW->parent;
+                    TreeNode *tempNode = TwoParticleSubtree(current->SW, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->SW; // creat a subtree contains both particles and connect it to the original node
+                    // delete  current->SW->parent;
+                    current->SW = tempNode;
                     current->SW->parent = current;
                     break;
                 }
@@ -267,8 +291,9 @@ void QuadrupleTree::Insert(Particle& newPtc){
                     current->leaf = false;              // mark that current node is not a particle
                 }
                 else{                                   // current node's child(SE) is a particle node(two particle are in the same region in this level)
-                    current->SE = TwoParticleSubtree(current->SE, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->SE; // creat a subtree contains both particles and connect it to the original node
-                    delete  current->SE->parent;
+                    TreeNode *tempNode = TwoParticleSubtree(current->SE, newPtc, tempMinX,tempMinY,tempMinZ,tempMaxX,tempMaxY,tempMaxZ)->SE; // creat a subtree contains both particles and connect it to the original node
+                    // delete  current->SE->parent;
+                    current->SE = tempNode;
                     current->SE->parent = current;
                     break;
                 }
@@ -317,8 +342,9 @@ void QuadrupleTree::DeleteNode(TreeNode *Node){
     if (Node->leaf){            // if the node is a particle node, disconnect to particle and delete self
        
         // delete Node->ptclPtr;
-        // Node->ptclPtr = NULL;
-        // delete Node->monople;
+        Node->ptclPtr = NULL;
+        delete Node->monople;
+        Node->monople = NULL;
         delete Node;
         return;
     }
@@ -327,8 +353,8 @@ void QuadrupleTree::DeleteNode(TreeNode *Node){
         if(Node->NW != NULL){DeleteNode(Node->NW);};
         if(Node->SE != NULL){DeleteNode(Node->SE);};
         if(Node->SW != NULL){DeleteNode(Node->SW);};
-        // delete Node->monople;
-        // Node->monople = NULL;
+        delete Node->monople;
+        Node->monople = NULL;
         delete Node;
         return;
     }

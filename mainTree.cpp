@@ -91,16 +91,16 @@ int main() {
     d.mass = {62.};
     d.acceleration = {0., 0., 0.};
     std::vector<Particle> Pvec = {a,b,c,d};
-    const int particleNum = 700;//11.653364000000secondsif100
+    const int particleNum = 10000;//11.653364000000secondsif100
     for (int i = 0; i < particleNum-4; i++){
         Particle a;
         double rand3[3]={0};
         for (int j = 0; j < 3; j++){
-            rand3[j] = static_cast<double>(rand() % 1000)/100.;
+            rand3[j] = static_cast<double>(rand() % (int)(1e12))/1000000.;
         }
         a.posi = {rand3[0],rand3[1],rand3[2]};
         for (int j = 0; j < 3; j++){
-            rand3[j] = static_cast<double>(rand() % 1000)/100.;
+            rand3[j] = static_cast<double>(rand() % (int)(1e12))/1000000.;
         }
         a.velocity = {rand3[0],rand3[1],rand3[2]};
         a.mass = static_cast<double>(rand() % 1000)/10.;
@@ -109,7 +109,7 @@ int main() {
     }
     
     
-    QuadrupleTree T(Pvec,-10000.,-10000.,-10000.,10000.,10000.,10000.); 
+    QuadrupleTree T(Pvec,-10000000000.,-10000000000.,-10000000000.,10000000000.,10000000000.,10000000000.); 
     for (int i = 0; i < Pvec.size(); i++)
     {
         std::cout << "Particle mass: " << Pvec[i].mass << std::endl;
@@ -125,11 +125,13 @@ int main() {
 
     std::vector<Particle> particles = Pvec;
     // Input time and time step
-    double t=0.4*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
+    double t=0.04*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
 
     // Perform simulation
     int num_steps = t / dt;
+    // int num_steps =1;
     T.TreeForce();
+    T.~QuadrupleTree();
     int i = 0;
 
     for (; i <= num_steps; i++) {
@@ -140,22 +142,22 @@ int main() {
         // std::cout<<i<<"\n";
     }
     end_t = clock();
-    std::vector<double> system_momentum = calculate_system_momentum(particles);
-    double system_energy = calculate_system_energy(particles);
+    // std::vector<double> system_momentum = calculate_system_momentum(particles);
+    // double system_energy = calculate_system_energy(particles);
     // double endtime =omp_get_wtime();
     double total_t = static_cast<double>(end_t - start_t) / CLOCKS_PER_SEC;
-    std::cout << "AB Time: " << (num_steps)*dt << std::endl;
-    std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
-    std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
-    std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
-    std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
-    std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
-    std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
-    std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
-    std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
-    std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
-    std::cout << "System energy: " << system_energy << std::endl;
-    std::cout << total_t <<  "seconds"<< std::endl;
-    std::cout << particleNum <<  "particles"<< std::endl;
+    std::cout << "AB Time: " << (num_steps)*dt <<"seconds"<< std::endl;
+    // std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
+    // std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
+    // std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
+    // std::cout << "Particle 2 position: " << particles[1].posi[0] << ", " << particles[1].posi[1] << std::endl;
+    // std::cout << "Particle 1 velocity: " << particles[0].velocity[0] << ", " << particles[0].velocity[1] << std::endl;
+    // std::cout << "Particle 2 velocity: " << particles[1].velocity[0] << ", " << particles[1].velocity[1] << std::endl;
+    // std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
+    // std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
+    // std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
+    // std::cout << "System energy: " << system_energy << std::endl;
+    std::cout << total_t <<  "seconds\n"<< std::endl;
+    std::cout << particleNum <<  "particles\n"<< std::endl;
     return 0;
 }
