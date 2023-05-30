@@ -164,7 +164,7 @@ void Verlet_velocity_Tree(std::vector<Particle>& particles, double G, double dt,
     QuadrupleTree quadTree(particles,mX,mY,mZ,MX,MY,MZ);
     std::vector<std::vector<double>> acceleration_prevs(particles.size(), std::vector<double>(2, 0.0));
     acceleration_prevs.reserve(particles.size());
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for (auto& p : particles) {
         // Update position using current velocity and acceleration
         p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <ctime>
 #include <iomanip>
+#include "orbit_integration_OMP.h"
 #include "orbit_integration.h"
 #include "quadrupleTree.h"
 #include <omp.h>

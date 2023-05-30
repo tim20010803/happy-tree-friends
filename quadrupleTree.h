@@ -1,7 +1,10 @@
-
-
-#ifndef THETA
+#ifndef RESOLUTION
 #define RESOLUTION 1e-10;
+#endif
+#ifndef TREE
+#define TREE
+#endif
+#ifndef THETA
 #define THETA 1.0
 #endif
 class QuadrupleTree;

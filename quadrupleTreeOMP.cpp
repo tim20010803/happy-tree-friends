@@ -5,7 +5,8 @@
 #include <cmath>
 #include <iomanip>
 #include <omp.h>
-#include "orbit_integration.h"
+#include "orbit_integration_OMP.h"
+// #include "orbit_integration.h"
 #include "quadrupleTree.h"
 //constant setting
 // #define THETA 1.0
