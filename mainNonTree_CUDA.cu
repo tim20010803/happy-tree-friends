@@ -4,7 +4,7 @@
 #include <vector>
 #include <omp.h>
 #include <random>
-#include "orbit_integration_CUDA.h"
+
 
 // Define particle structure
 struct Particle {
@@ -79,6 +79,22 @@ __global__ void calculate_gravity_cuda_kernel(Particle* particles, float G, int 
     }
 }
 
+__global__ void Verlet_velocity_cuda_kernel(Particle* particles, float G, float dt, int num_particles) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (index < num_particles) {
+        Particle& p = particles[index];
+
+        p.velocity[0] += p.acceleration[0] * dt;
+        p.velocity[1] += p.acceleration[1] * dt;
+
+        p.posi[0] += p.velocity[0] * dt;
+        p.posi[1] += p.velocity[1] * dt;
+
+        p.acceleration[0] = 0.0;
+        p.acceleration[1] = 0.0;
+    }
+}
 
 int main() {
     // Define simulation parameters
