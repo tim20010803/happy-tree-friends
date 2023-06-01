@@ -50,6 +50,26 @@ QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double m
     Monople(root);                                        //initialize all monople of nodes in whole tree
 
 }
+QuadrupleTree::QuadrupleTree(double theta,std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
+    PtcVectorPtr = &Particles;
+    THETA = theta;
+    root = new TreeNode;                                  // allocate memory for root
+    root->parent = nullptr;
+    root->level =0;
+    maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
+    minX = mX; minY = mY; minZ = mZ;
+    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+        if(Particles[i].posi[0]>MX or Particles[i].posi[0]<mX or Particles[i].posi[1]>MY or Particles[i].posi[1]<mY){
+            std::cout<<"particle out of boundry";
+            std::exit(0);
+        }
+    }
+    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+        Insert(Particles[i]);
+    }
+    Monople(root);                                        //initialize all monople of nodes in whole tree
+
+}
 QuadrupleTree::~QuadrupleTree(){
     // if (root != NULL){
     //     if(root->NE != NULL){DeleteNode(root->NE); root->NE = NULL;};
