@@ -42,7 +42,7 @@ private:
     // in the original level of first particle
 public:
     double THETA {1.0};
-    int MAXLEVEL {20};
+    int MAXLEVEL {30};
     int proxPtclNum {0};
     TreeNode *root;
     QuadrupleTree():root(NULL){};

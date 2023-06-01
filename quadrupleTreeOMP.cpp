@@ -203,30 +203,37 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,d
                 tempOut = tempOut->SW;
             }
             midX = (mX + MX)/2.; midY = (mY + MY)/2.; midZ = (mZ + MZ)/2.;    // update new mid-line of new region 
-            if (tempOut->level > MAXLEVEL){
-                std::cout << std::fixed << std::setprecision(30);
+            if (tempOut->level > MAXLEVEL){//this code is used to avoid two particles at the same position or extreamly closed ones.
+
+                std::cout << std::fixed << std::setprecision(10);
                 printf("first particle NE:(%d,%d), second:(%d,%d)\n",firstPtlN,firstPtlE,secPtlN,secPtlE);
                 printf("%d-th particle approximated(level > %d)\n",proxPtclNum,MAXLEVEL);
                 printf("velocity of ptc1:(%f,%f), ptc2:(%f,%f)\n",ptcTree1->ptclPtr->velocity[0],ptcTree1->ptclPtr->velocity[1],ptc2.velocity[0],ptc2.velocity[1]);
-                printf("position of ptc1:(%f,%f), ptc2:(%f,%f)\n",ptcTree1->ptclPtr->posi[0],ptcTree1->ptclPtr->posi[1],ptc2.posi[0],ptc2.posi[1]);
+                std::cout<<"position : ptc1:("<<ptcTree1->ptclPtr->posi[0]<<","<<ptcTree1->ptclPtr->posi[1]<<")\n";
+                std::cout<<"           ptc2:("<<ptc2.posi[0]<<","<<ptc2.posi[1]<<")\n";
                 double COMV[2] = {0.,0.};//center of mass velocity
                 double COMR[2] = {0.,0.};//center of mass position
                 double ptc1COMV[2] = {0.,0.};//particle velocity in center of mass frame 
                 double ptc2COMV[2] = {0.,0.};//particle velocity in center of mass frame 
+                
                 COMV[0] = ptcTree1->ptclPtr->velocity[0]*ptcTree1->ptclPtr->mass + ptc2.velocity[0]*ptc2.mass;
                 COMV[1] = ptcTree1->ptclPtr->velocity[1]*ptcTree1->ptclPtr->mass + ptc2.velocity[1]*ptc2.mass;
                 COMV[0] /= (ptcTree1->ptclPtr->mass + ptc2.mass);
                 COMV[1] /= (ptcTree1->ptclPtr->mass + ptc2.mass);
                 COMR[0] = ptcTree1->ptclPtr->posi[0]*ptcTree1->ptclPtr->mass + ptc2.posi[0]*ptc2.mass;
                 COMR[1] = ptcTree1->ptclPtr->posi[1]*ptcTree1->ptclPtr->mass + ptc2.posi[1]*ptc2.mass;
+                
                 ptc1COMV[0] = ptcTree1->ptclPtr->velocity[0] - COMV[0];
                 ptc1COMV[1] = ptcTree1->ptclPtr->velocity[1] - COMV[1];
                 ptc2COMV[0] = ptc2.velocity[0] - COMV[0];
                 ptc2COMV[1] = ptc2.velocity[1] - COMV[1];
+                
                 double oldDistant{0.};
                 double newDistant{0.};
+                
                 oldDistant += (ptcTree1->ptclPtr->posi[0] - ptc2.posi[0])*(ptcTree1->ptclPtr->posi[0] - ptc2.posi[0]);
                 oldDistant += (ptcTree1->ptclPtr->posi[1] - ptc2.posi[1])*(ptcTree1->ptclPtr->posi[1] - ptc2.posi[1]);
+                
                 if (((ptc1COMV[0])*(ptc1COMV[0])+(ptc1COMV[1])*(ptc1COMV[1]))<1e-5){
                     ptcTree1->ptclPtr->posi[0] = (MX+ midX)/2.;
                     ptcTree1->ptclPtr->posi[1] = (MY+ midY)/2.;
@@ -251,11 +258,12 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,d
                 firstPtlE = ptcTree1->ptclPtr->posi[0] > midX;
                 secPtlN = ptc2.posi[1] > midY;
                 secPtlE = ptc2.posi[0] > midX;
+                
                 printf("conv (%f,%f)\n",COMV[0],COMV[1]);
                 printf("conv ptc1:(%f,%f), ptc2:(%f,%f)\n",ptc1COMV[0],ptc1COMV[1],ptc2COMV[0],ptc2COMV[1]);
                 // printf("old distant: %f, new: %f\n",oldDistant,newDistant);
-                std::cout<<"new posi: ptc1:("<<ptcTree1->ptclPtr->posi[0]<<","<<ptcTree1->ptclPtr->posi[1]<<")";
-                std::cout<<"ptc2:("<<ptc2.posi[0]<<","<<ptc2.posi[1]<<")\n";
+                std::cout<<"new posi: ptc1:("<<ptcTree1->ptclPtr->posi[0]<<","<<ptcTree1->ptclPtr->posi[1]<<")\n";
+                std::cout<<"          ptc2:("<<ptc2.posi[0]<<","<<ptc2.posi[1]<<")\n";
                 // printf("position of new ptc1:(%f,%f), ptc2:(%f,%f)\n",ptcTree1->ptclPtr->posi[0],ptcTree1->ptclPtr->posi[1],ptc2.posi[0],ptc2.posi[1]);
                 printf("first particle NE:(%d,%d), second:(%d,%d)\n\n\n",firstPtlN,firstPtlE,secPtlN,secPtlE);
                 

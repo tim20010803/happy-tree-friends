@@ -35,13 +35,14 @@ int main() {
     d.mass = {62.};
     d.acceleration = {0., 0., 0.};
     std::vector<Particle> particles = {a,b,c,d};
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::uniform_real_distribution<> dist(-1000,1000);
     const int particleNum = 100000;//11.653364000000secondsif100
     for (int i = 0; i < particleNum-4; i++){
         Particle a;
         double rand3[3]={0};
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<> dist(-1000,1000);
+        
         for (int j = 0; j < 3; j++){
             // rand3[j] = static_cast<double>(rand() % (int)(1e10))/1e10;
             rand3[j] = dist(gen);
@@ -73,13 +74,13 @@ int main() {
     double t=0.04*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
 
     // Perform simulation
-    int num_steps = t / dt;
-    // int num_steps =1;
+    // int num_steps = t / dt;
+    int num_steps =0;
 
     T.TreeForce();
 
     T.~QuadrupleTree();
-    int i = 0;
+    
 
     // for (int i = 0; i < particles.size(); i++)
     // {
@@ -89,17 +90,19 @@ int main() {
     //     std::cout<<i<<"th" << "Particle acceleration: " << particles[i].acceleration[0] << ", " << particles[i].acceleration[1] << std::endl;
 
     // }
-    // for (; i <= num_steps; i++) {
-    //     Verlet_velocity_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
-    //     // AB_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
-    //     // RK4_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
-
-    //     // std::cout<<i<<"\n";
-    // }
+    if(num_steps != 0){
+        for (int i = 0; i <= num_steps; i++) {
+            Verlet_velocity_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+            std::cout<<"running at "<<i<<"-th step\n";
+            // AB_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+            // RK4_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+        }
+    }
+    
     end_t = clock();
 
     // std::vector<double> system_momentum = calculate_system_momentum(particles);
-    double system_energy = calculate_system_energy(particles);
+    // double system_energy = calculate_system_energy(particles);
     // double endtime =omp_get_wtime();
     double total_t = static_cast<double>(end_t - start_t) / CLOCKS_PER_SEC;
     std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
@@ -112,7 +115,7 @@ int main() {
     std::cout << "Particle 1 acceleration: " << particles[0].acceleration[0] << ", " << particles[0].acceleration[1] << std::endl;
     std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
     // std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
-    std::cout << "System energy: " << system_energy << std::endl;
+    // std::cout << "System energy: " << system_energy << std::endl;
     std::cout <<"calculation time:" << total_t <<  "seconds"<< std::endl;
     std::cout << particleNum <<  "particles"<< std::endl;
     std::cout << num_steps <<  "steps"<< std::endl;
