@@ -1,1 +1,1 @@
-g++ -std=c++11 quadrupleTree.cpp orbit_integration.cpp mainTree.cpp -o mainTree.out
+clang++ -Xpreprocessor -fopenmp -lomp -g quadrupleTree.cpp orbit_integration.cpp mainTree.cpp -o mainTree.out

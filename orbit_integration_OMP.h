@@ -22,3 +22,4 @@ void AB_Tree(std::vector<Particle>& particles, double dt,double mX,double mY,dou
 std::vector<double> calculate_system_momentum(const std::vector<Particle>& particles);
 std::vector<double> calculate_system_angular_momentum(const std::vector<Particle>& particles);
 double calculate_system_energy(const std::vector<Particle>& particles);
+
