@@ -1,5 +1,9 @@
-
-
+#ifndef RESOLUTION
+#define RESOLUTION 1e-10;
+#endif
+#ifndef TREE
+#define TREE
+#endif
 #ifndef THETA
 #define THETA 1.0
 #endif
@@ -7,22 +11,25 @@ class QuadrupleTree;
 class TreeNode{
 // private:
 public:                                // set all of parameter be public for testing. you should only access all those parameters by function in QuadrupleTree.
-    TreeNode *parent;                  // point to the parent node
-    TreeNode *NW;                      // northwest child node
-    TreeNode *NE;                      // northeast child node
-    TreeNode *SW;                      // southwest child node
-    TreeNode *SE;                      // southeast child node
-    Particle *ptclPtr;                 // the pointer of single particle if this node is a leaf(without any child node), otherwise it's a null pointer.  
+    TreeNode *parent{0};                  // point to the parent node
+    TreeNode *NW{0};                      // northwest child node
+    TreeNode *NE{0};                      // northeast child node
+    TreeNode *SW{0};                      // southwest child node
+    TreeNode *SE{0};                      // southeast child node
+    Particle *ptclPtr{0};                 // the pointer of single particle if this node is a leaf(without any child node), otherwise it's a null pointer.  
     int level;                         // the depth level of this node (which is zero for root node)
     bool leaf;                         // if leaf is true then this node is a leaf the point toward the particle is ptclPtr
-    double *monople;                    // storege the monople of all subtree
+    double *monople{0};                    // storege the monople of all subtree
     std::vector<double> CalculateForce(TreeNode *Node, Particle &tarPtc); //Compute the force(acceleration) acting from this node to a particle p
 
+    ~TreeNode();
     TreeNode():NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(false),ptclPtr{NULL},monople{NULL}{};                   // constuctor of TreeNode (which creats a TreeNode object and initialize parameters) 
     TreeNode(Particle *newPtcl):NW(NULL),NE(NULL),SW(NULL),SE(NULL),parent(NULL),level(0),leaf(true),ptclPtr(newPtcl),monople{NULL}{};// constuctor of TreeNode which stores the particle's location into pointer and set leaf==true (since this node is a particle)
     void PrintNode();
         friend class QuadrupleTree;   // give the QuadrupleTree class access to those private members(such as private functions and parameters)
 };
+
+
 
 class QuadrupleTree{
 private:

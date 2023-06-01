@@ -3,83 +3,17 @@
 #include <queue>
 #include <vector>
 #include <cmath>
+#include <ctime>
 #include <iomanip>
+#include "orbit_integration_OMP.h"
 #include "orbit_integration.h"
 #include "quadrupleTree.h"
-
-void calculate_gravity(std::vector<Particle>& particles, double G) {
-    for (auto& p1 : particles) {
-        for (auto& p2 : particles) {
-            if (&p1 == &p2) {
-                continue; // Skip self-interaction
-            }
-            // Calculate distance between particles
-            double dx = p2.posi[0] - p1.posi[0];
-            double dy = p2.posi[1] - p1.posi[1];
-            double dist_squared = dx * dx + dy * dy;
-            double dist_cubed = dist_squared * std::sqrt(dist_squared);
-
-            // Calculate gravitational force
-            double force_magnitude = G * p1.mass * p2.mass / dist_cubed;
-            double force_x = force_magnitude * dx;
-            double force_y = force_magnitude * dy;
-
-            // Update particle accelerations
-            p1.acceleration[0] += force_x / p1.mass;
-            p1.acceleration[1] += force_y / p1.mass;
-        }
-    }
-}
-std::vector<double> calculate_system_momentum(const std::vector<Particle>& particles) {
-    std::vector<double> system_momentum(2, 0.0);
-    for (const auto& p : particles) {
-        system_momentum[0] += p.mass * p.velocity[0];
-        system_momentum[1] += p.mass * p.velocity[1];
-    }
-    return system_momentum;
-}
-
-std::vector<double> calculate_system_angular_momentum(const std::vector<Particle>& particles) {
-    std::vector<double> system_angular_momentum(1, 0.0);
-
-    for (const auto& p : particles) {
-        // Calculate the angular momentum for each particle in 2D
-        double angular_momentum = p.mass * (p.posi[0] * p.velocity[1] - p.posi[1] * p.velocity[0]);
-
-        // Add the particle's angular momentum to the system's angular momentum
-        system_angular_momentum[0] += angular_momentum;
-    }
-
-    return system_angular_momentum;
-}
-
-double calculate_system_energy(const std::vector<Particle>& particles) {
-  double total_kinetic_energy = 0.0;
-  double total_potential_energy = 0.0;
-  
-    for (const auto& p : particles) {
-        // Calculate kinetic energy
-        double speed_squared = p.velocity[0]*p.velocity[0] + p.velocity[1]*p.velocity[1];
-        double kinetic_energy = 0.5 * p.mass * speed_squared;
-        total_kinetic_energy += kinetic_energy;
-
-        // Calculate potential energy
-        for (const auto& other_p : particles) {
-            if (&p == &other_p) {
-                continue;
-            }
-            double dx = other_p.posi[0] - p.posi[0];
-            double dy = other_p.posi[1] - p.posi[1];
-            double distance = std::sqrt(dx*dx + dy*dy);
-            double potential_energy = -G_CONST * p.mass * other_p.mass / distance;
-            total_potential_energy += potential_energy;
-        }
-    }
-
-    return total_kinetic_energy + total_potential_energy;
-}
+#include <omp.h>
 // main function is for testing
 int main() {
+    clock_t start_t, end_t;
+    // double starttime =omp_get_wtime();
+    start_t = clock();
     Particle a;
     a.posi = {1.,6.,4.};
     a.velocity = {4.,3.,2.};
@@ -100,43 +34,70 @@ int main() {
     d.velocity = {8.,6.,7.};
     d.mass = {62.};
     d.acceleration = {0., 0., 0.};
-    
-    std::vector<Particle> Pvec = {a,b,c,d};
-    QuadrupleTree T(Pvec,-10000.,-10000.,-10000.,10000.,10000.,10000.); 
-    
-    // T.root->PrintNode();
-    // T.root->SW->PrintNode();
-    // T.root->NW->PrintNode();
-    // T.root->NW->SE->PrintNode();
-    // T.root->NW->SW->PrintNode();
-    // T.root->NW->SW->SW->PrintNode();
-    // T.root->NW->SW->NE->PrintNode();
-    // T.root->NW->PrintNode();
+    std::vector<Particle> particles = {a,b,c,d};
+    const int particleNum = 100;//11.653364000000secondsif100
+    for (int i = 0; i < particleNum-4; i++){
+        Particle a;
+        double rand3[3]={0};
+        for (int j = 0; j < 3; j++){
+            rand3[j] = static_cast<double>(rand() % (int)(1e10))/1e10;
+        }
+        a.posi = {rand3[0],rand3[1],rand3[2]};
+        for (int j = 0; j < 3; j++){
+            rand3[j] = static_cast<double>(rand() % (int)(1e9))/1e9;
+        }
+        a.velocity = {rand3[0],rand3[1],rand3[2]};
+        a.mass = static_cast<double>(rand() % 1000)/10.;
+        a.acceleration={0.,0.,0.};
+        particles.push_back(a);
+    }
+    srand(112342);
+    std::cout << std::fixed << std::setprecision(12);
+    QuadrupleTree T(particles,-10.,-10.,-10.,10.,10.,10.); 
+    // for (int i = 0; i < particles.size(); i++)
+    // {
+    //     std::cout << "Particle mass: " << particles[i].mass << std::endl;
+    //     std::cout << "Particle position: " << particles[i].posi[0] << ", " << particles[i].posi[1] << std::endl;
+    //     std::cout << "Particle velocity: " << particles[i].velocity[0] << ", " << particles[i].velocity[1] << std::endl;
+    //     std::cout << "Particle acceleration: " << particles[i].acceleration[0] << ", " << particles[i].acceleration[1] << std::endl;
 
+    // }
+    
+    
   
     std::cout << std::fixed << std::setprecision(12);
 
-    std::vector<Particle> particles = Pvec;
+    
     // Input time and time step
-    double t=40.*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
+    double t=0.04*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
 
     // Perform simulation
-    int num_steps = t / dt;
+    // int num_steps = t / dt;
+    int num_steps =1;
     T.TreeForce();
+    T.~QuadrupleTree();
     int i = 0;
+    for (int i = 0; i < particles.size(); i++)
+    {
+        std::cout<<i<<"th" << "Particle mass: " << particles[i].mass << std::endl;
+        std::cout<<i<<"th" << "Particle position: " << particles[i].posi[0] << ", " << particles[i].posi[1] << std::endl;
+        std::cout<<i<<"th" << "Particle velocity: " << particles[i].velocity[0] << ", " << particles[i].velocity[1] << std::endl;
+        std::cout<<i<<"th" << "Particle acceleration: " << particles[i].acceleration[0] << ", " << particles[i].acceleration[1] << std::endl;
 
-    for (; i <= num_steps; i++) {
-        Verlet_velocity_Tree(particles,  G_CONST, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
-        // AB_Tree(particles,  G_CONST, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
-        // RK4_Tree(particles,  G_CONST, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
-
-        // std::cout<<i<<"\n";
     }
+    // for (; i <= num_steps; i++) {
+    //     Verlet_velocity_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+    //     // AB_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+    //     // RK4_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
 
+    //     // std::cout<<i<<"\n";
+    // }
+    end_t = clock();
     std::vector<double> system_momentum = calculate_system_momentum(particles);
     double system_energy = calculate_system_energy(particles);
-
-    std::cout << "AB Time: " << (num_steps)*dt << std::endl;
+    // double endtime =omp_get_wtime();
+    double total_t = static_cast<double>(end_t - start_t) / CLOCKS_PER_SEC;
+    std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
     std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
     std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
     std::cout << "Particle 1 position: " << particles[0].posi[0] << ", " << particles[0].posi[1] << std::endl;
@@ -147,6 +108,8 @@ int main() {
     std::cout << "Particle 2 acceleration: " << particles[1].acceleration[0] << ", " << particles[1].acceleration[1] << std::endl;
     std::cout << "System momentum: " << system_momentum[0] << ", " << system_momentum[1] << std::endl;
     std::cout << "System energy: " << system_energy << std::endl;
-
+    std::cout <<"calculation time:" << total_t <<  "seconds"<< std::endl;
+    std::cout << particleNum <<  "particles"<< std::endl;
+    std::cout << num_steps <<  "steps"<< std::endl;
     return 0;
 }
