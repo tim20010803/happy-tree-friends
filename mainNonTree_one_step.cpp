@@ -9,6 +9,8 @@
 #include "orbit_integration_OMP.h"
 #include <random>
 #include <fstream>
+#include <string>
+#include <sstream>
 // main function is for testing
 int main() {
     clock_t start_t, end_t;
@@ -61,92 +63,148 @@ int main() {
     start_t = clock();
     
     // set parameter
-    int particleNum = 100; // number of particle
-    double r = 1000; // radius of the initial disk
-    double v_norm = 1e-3; // the coefficient of velocity
-    double pos_range = 1000.; // the position range of the random number
-    double vec_range = 100.; // the velocity range of the random number
-    double t=4.0*M_PI/pow( G_CONST*1000000000,0.5), dt=0.01; // Input time and time step
-    int num_steps = t / dt;
+    // int particleNum = 100; // number of particle
+    // double r = 1000; // radius of the initial disk
+    // double v_norm = 1e-3; // the coefficient of velocity
+    // double pos_range = 1000.; // the position range of the random number
+    // double vec_range = 100.; // the velocity range of the random number
+    // double t=4.0*M_PI/pow( G_CONST*1000000000,0.5), dt=0.01; // Input time and time step
+    // int num_steps = t / dt;
 
 
-    std::vector<Particle> particles;
+    // std::vector<Particle> particles;
     
     // produce random seed
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    // std::random_device rd;
+    // std::mt19937 gen(rd());
     // set random range
-    std::uniform_real_distribution<double> massDist(1.0, 10.0);
-    std::uniform_real_distribution<double> xDist(-1 * pos_range, pos_range); 
-    std::uniform_real_distribution<double> yDist(-1 * pos_range, pos_range);
-    std::uniform_real_distribution<double> wDist(0, 1);
-    std::uniform_real_distribution<double> velocityXDist(-1 * vec_range, vec_range);
-    std::uniform_real_distribution<double> velocityYDist(-1 * vec_range, vec_range);
+    // std::uniform_real_distribution<double> massDist(1.0, 10.0);
+    // std::uniform_real_distribution<double> xDist(-1 * pos_range, pos_range); 
+    // std::uniform_real_distribution<double> yDist(-1 * pos_range, pos_range);
+    // std::uniform_real_distribution<double> wDist(0, 1);
+    // std::uniform_real_distribution<double> velocityXDist(-1 * vec_range, vec_range);
+    // std::uniform_real_distribution<double> velocityYDist(-1 * vec_range, vec_range);
 
-    while ( particles.size() < particleNum ){ 
-        // set parameter  
-        double m = massDist(gen);
-        double x = xDist(gen);
-        double y = yDist(gen);
-        double w = wDist(gen);
-        double delta_vx = velocityXDist(gen);
-        double delta_vy = velocityYDist(gen);
-        double d = sqrt(x*x + y*y);
-        // let the particles in the range of a disk
-        if ( d <=  r and  w*pos_range*pos_range*pos_range >= d*d*d ){
-            Particle particle;
+    // while ( particles.size() < particleNum ){ 
+    //     // set parameter  
+    //     double m = massDist(gen);
+    //     double x = xDist(gen);
+    //     double y = yDist(gen);
+    //     double w = wDist(gen);
+    //     double delta_vx = velocityXDist(gen);
+    //     double delta_vy = velocityYDist(gen);
+    //     double d = sqrt(x*x + y*y);
+    //     // let the particles in the range of a disk
+    //     if ( d <=  r and  w*pos_range*pos_range*pos_range >= d*d*d ){
+    //         Particle particle;
             
-            // compute the velocity and the acceleratiion
-            double vx = - v_norm * d * d * y / d + delta_vx;
-            double vy = v_norm * d * d * x / d + delta_vy;
-            double ax = 0;
-            double ay = 0;
+    //         // compute the velocity and the acceleratiion
+    //         double vx = - v_norm * d * d * y / d + delta_vx;
+    //         double vy = v_norm * d * d * x / d + delta_vy;
+    //         double ax = 0;
+    //         double ay = 0;
 
-            // add the particle initial condition
-            particle.mass = m;
-            particle.posi.push_back(x);
-            particle.posi.push_back(y);
-            particle.velocity.push_back(vx);
-            particle.velocity.push_back(vy);
-            particle.acceleration.push_back(ax);
-            particle.acceleration.push_back(ay);
+    //         // add the particle initial condition
+    //         particle.mass = m;
+    //         particle.posi.push_back(x);
+    //         particle.posi.push_back(y);
+    //         particle.velocity.push_back(vx);
+    //         particle.velocity.push_back(vy);
+    //         particle.acceleration.push_back(ax);
+    //         particle.acceleration.push_back(ay);
 
-            // add the particle
-            particles.push_back(particle);
+    //         // add the particle
+    //         particles.push_back(particle);
+    //     }
+    // }
+
+    // input the data from the file
+    std::ifstream file("one_step_data.csv");
+    std::vector<Particle> particles; // store the particles
+    std::string line; // each line of the file data
+    bool isFirstLine = true; // if line is the first line or not
+
+    // to get all of the data
+    while (std::getline(file, line)) {
+        // delete the first line because the first line is
+        // "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY"
+        if (isFirstLine) {
+            isFirstLine = false;
+            continue; 
         }
+
+        // set the parameter to store data
+        std::istringstream iss(line);
+        std::string element;
+        std::vector<std::string> elements; 
+        // change the line string into a vector
+        while (std::getline(iss, element, ',')) {
+            elements.push_back(element);
+        }
+
+        Particle particle;
+        // input data
+        double m = std::stod(elements[2]);
+        double x = std::stod(elements[3]);
+        double y = std::stod(elements[4]);
+        double vx = std::stod(elements[5]);
+        double vy = std::stod(elements[6]);
+        double ax = std::stod(elements[7]);
+        double ay = std::stod(elements[8]);
+        // add the particle initial condition
+        particle.mass = m;
+        particle.posi.push_back(x);
+        particle.posi.push_back(y);
+        particle.velocity.push_back(vx);
+        particle.velocity.push_back(vy);
+        particle.acceleration.push_back(ax);
+        particle.acceleration.push_back(ay);
+
+        // add the particle
+        particles.push_back(particle);
     }
+
+    int index = 1;
+    for (const auto& particle : particles) {        
+        std::cout << "Particle: " << index << ", Mass: " << particle.mass 
+        << ", PositionX: " << particle.posi[0] << ", PositionY: " << particle.posi[1] 
+        << ", VectorX: " << particle.velocity[0] << ", VectorY: " << particle.velocity[1] 
+        << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
+        index++;
+    }
+
 
     calculate_gravity(particles);
     // make a new file
-    std::ofstream file("mainNonTree_data.csv");
-    file << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
+    // std::ofstream file("mainNonTree_data.csv");
+    // file << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
     
-    // put the data into the file
-    for (int step = 0; step <= num_steps; step++){
-        for (int i = 0; i < particles.size(); i++)
-        {
-            int p = i+1;
-            double mass = particles[i].mass;
-            double posX = particles[i].posi[0];
-            double posY = particles[i].posi[1];
-            double vecX = particles[i].velocity[0];
-            double vecY = particles[i].velocity[1];
-            double accX = particles[i].acceleration[0];
-            double accY = particles[i].acceleration[1];
-            double system_energy = calculate_system_energy(particles);
-            std::vector<double> system_momentum = calculate_system_momentum(particles);
-            std::vector<double> system_angular_momentum = calculate_system_angular_momentum(particles);
+    // // put the data into the file
+    // for (int step = 0; step <= num_steps; step++){
+    //     for (int i = 0; i < particles.size(); i++)
+    //     {
+    //         int p = i+1;
+    //         double mass = particles[i].mass;
+    //         double posX = particles[i].posi[0];
+    //         double posY = particles[i].posi[1];
+    //         double vecX = particles[i].velocity[0];
+    //         double vecY = particles[i].velocity[1];
+    //         double accX = particles[i].acceleration[0];
+    //         double accY = particles[i].acceleration[1];
+    //         double system_energy = calculate_system_energy(particles);
+    //         std::vector<double> system_momentum = calculate_system_momentum(particles);
+    //         std::vector<double> system_angular_momentum = calculate_system_angular_momentum(particles);
 
 
-            file << step * dt  << "," << p  << "," << mass << "," 
-                << posX << "," << posY << "," << vecX << "," << vecY << "," 
-                << accX << "," << accY << "," << system_energy << "," 
-                << system_momentum[0] << "," << system_momentum[1] << "," 
-                << system_angular_momentum[0] << "," << system_angular_momentum[1] << std::endl;
-        }
-        Verlet_velocity(particles, dt);
-    }
-    file.close();
+    //         file << step * dt  << "," << p  << "," << mass << "," 
+    //             << posX << "," << posY << "," << vecX << "," << vecY << "," 
+    //             << accX << "," << accY << "," << system_energy << "," 
+    //             << system_momentum[0] << "," << system_momentum[1] << "," 
+    //             << system_angular_momentum[0] << "," << system_angular_momentum[1] << std::endl;
+    //     }
+    //     Verlet_velocity(particles, dt);
+    // }
+    // file.close();
     
 
     // for (int i = 0; i < particles.size(); i++)
@@ -188,7 +246,7 @@ int main() {
     // std::vector<double> system_momentum = calculate_system_momentum(particles);
     // double system_energy = calculate_system_energy(particles);
     // double endtime =omp_get_wtime();
-    double total_t = static_cast<double>(end_t - start_t) / CLOCKS_PER_SEC;
+    // double total_t = static_cast<double>(end_t - start_t) / CLOCKS_PER_SEC;
     //std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
     //std::cout << "Particle 1 mass: " << particles[0].mass << std::endl;
     //std::cout << "Particle 2 mass: " << particles[1].mass << std::endl;
