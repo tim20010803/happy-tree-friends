@@ -16,45 +16,73 @@ struct Particle {
     float mass;
 };
 
-// Calculate system momentum
+// 自定义reduction运算符：向量相加
+#pragma omp declare reduction(vec_float_plus : std::vector<float> : \
+    std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<float>())) \
+    initializer(omp_priv = decltype(omp_orig)(omp_orig.size(), 0.0))
+
+// 计算系统动量
 std::vector<float> calculate_system_momentum(const std::vector<Particle>& particles) {
-    float total_momentum_x = 0.0;
-    float total_momentum_y = 0.0;
+    std::vector<float> system_momentum(2, 0.0);
 
-    for (const Particle& p : particles) {
-        total_momentum_x += p.mass * p.velocity[0];
-        total_momentum_y += p.mass * p.velocity[1];
+    #pragma omp parallel for reduction(vec_float_plus:system_momentum)
+    for (int i = 0; i < particles.size(); ++i) {
+        const Particle& particle = particles[i];
+        system_momentum[0] += particle.mass * particle.velocity[0];
+        system_momentum[1] += particle.mass * particle.velocity[1];
     }
 
-    return { total_momentum_x, total_momentum_y };
+    return system_momentum;
 }
 
-// Calculate system energy
+// 计算系统角动量
+std::vector<float> calculate_system_angular_momentum(const std::vector<Particle>& particles) {
+    std::vector<float> system_angular_momentum(1, 0.0);
+
+    #pragma omp parallel for reduction(vec_float_plus:system_angular_momentum)
+    for (int i = 0; i < particles.size(); ++i) {
+        const Particle& particle = particles[i];
+        system_angular_momentum[0] += particle.mass * (particle.posi[0] * particle.velocity[1] - particle.posi[1] * particle.velocity[0]);
+    }
+
+    return system_angular_momentum;
+}
+
+
 float calculate_system_energy(const std::vector<Particle>& particles, float G) {
-    float total_energy = 0.0;
+    float total_kinetic_energy = 0.0;
+    float total_potential_energy = 0.0;
 
-    for (const Particle& p : particles) {
-        float kinetic_energy = 0.5 * p.mass * (p.velocity[0] * p.velocity[0] + p.velocity[1] * p.velocity[1]);
-        float potential_energy = 0.0;
+    #pragma omp parallel for reduction(+:total_kinetic_energy, total_potential_energy)
+    for (size_t i = 0; i < particles.size(); i++) {
+        const auto& p = particles[i];
 
-        for (const Particle& other : particles) {
-            if (&p != &other) {
-                float dx = other.posi[0] - p.posi[0];
-                float dy = other.posi[1] - p.posi[1];
-                float dist = sqrt(dx * dx + dy * dy);
-                potential_energy -= G * p.mass * other.mass / dist;
+        // Calculate kinetic energy
+        float speed_squared = p.velocity[0] * p.velocity[0] + p.velocity[1] * p.velocity[1];
+        float kinetic_energy = 0.5 * p.mass * speed_squared;
+        #pragma omp atomic
+        total_kinetic_energy += kinetic_energy;
+
+        // Calculate potential energy
+        for (size_t j = 0; j < particles.size(); j++) {
+            if (i == j) {
+                continue;
             }
-        }
 
-        total_energy += kinetic_energy + potential_energy;
+            const auto& other_p = particles[j];
+            float dx = other_p.posi[0] - p.posi[0];
+            float dy = other_p.posi[1] - p.posi[1];
+            float distance = std::sqrt(dx * dx + dy * dy);
+            float potential_energy = -G * p.mass * other_p.mass / distance;
+            #pragma omp atomic
+            total_potential_energy += potential_energy;
+        }
     }
 
-    return total_energy;
+    return total_kinetic_energy + total_potential_energy;
 }
 
-
-
-__global__ void simulate_particles_cuda_kernel(Particle* particles, const float* particle_masses, double G, double dt, int num_particles) {
+__global__ void simulate_particles_cuda_kernel(Particle* particles, const float* particle_masses, float G, float dt, int num_particles) {
     extern __shared__ Particle sharedParticles[];
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -110,6 +138,7 @@ int main() {
 
     // Perform simulation
     int num_steps = t / dt;
+    int particles_num = 100000;
 
     // Random number generator
     std::random_device rd;
@@ -120,8 +149,8 @@ int main() {
 
     // Generate particles
     std::vector<Particle> particles;
-    particles.reserve(131072);
-    for (int i = 0; i < 131072; ++i) {
+    particles.reserve(particles_num);
+    for (int i = 0; i < particles_num; ++i) {
         Particle particle;
         particle.posi[0] = dist_pos(gen);
         particle.posi[1] = dist_pos(gen);
@@ -170,8 +199,8 @@ int main() {
     auto end = std::chrono::high_resolution_clock::now();
 
     // Calculate duration
-    std::chrono::duration<double> duration = end - start;
-    double seconds = duration.count();
+    std::chrono::duration<float> duration = end - start;
+    float seconds = duration.count();
 
     std::vector<float> system_momentum = calculate_system_momentum(particles);
     float system_energy = calculate_system_energy(particles, G);
@@ -186,4 +215,3 @@ int main() {
 
     return 0;
 }
-
