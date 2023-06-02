@@ -28,10 +28,11 @@ int NThread = 8;
 int particleQuadrant(Particle p,double mX,double mY,double mZ,double MX,double MY, double MZ){
     double midX=(MX+mX/2.);
     double midY=(MY+mY/2.);
-    if (p.posi[0]>midX and p.posi[1]>midY){return 1;}
-    else if (p.posi[0]<midX and p.posi[1]>midY){return 2;}
+    if (p.posi[0]>=midX and p.posi[1]>=midY){return 1;}
+    else if (p.posi[0]<midX and p.posi[1]>=midY){return 2;}
     else if (p.posi[0]<midX and p.posi[1]<midY){return 3;}
-    else if (p.posi[0]>midX and p.posi[1]<midY){return 4;}
+    else if (p.posi[0]>=midX and p.posi[1]<midY){return 4;}
+    else return -1;
 }
 
 QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ){                 
@@ -44,6 +45,41 @@ QuadrupleTree::QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,do
 }
 QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
     PtcVectorPtr = &Particles;
+    root = new TreeNode;                                  // allocate memory for root
+    root->parent = nullptr;
+    root->level =0;
+    maxX = MX; maxY = MY; maxZ = MZ;                      // inintialize boundary of this tree
+    minX = mX; minY = mY; minZ = mZ;
+    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+        if(Particles[i].posi[0]>MX or Particles[i].posi[0]<mX or Particles[i].posi[1]>MY or Particles[i].posi[1]<mY){
+            std::cout<<"particle out of boundry";
+            std::exit(0);
+        }
+    }
+    // # pragma omp parallel for
+    for (int i = 0; i < Particles.size(); i++){           // insert all particles into tree
+    // const int tid = omp_get_thread_num();
+        // int quadrant = particleQuadrant(Particles[i],mX,mY,mZ,MX,MY,MZ);
+        // if (tid%4==0 and quadrant==0){
+        //     Insert(Particles[i]);
+        // }
+        // else if (tid%4==1 and quadrant==1){
+        //     Insert(Particles[i]);
+        // }
+        // else if (tid%4==2 and quadrant==2){
+        //     Insert(Particles[i]);
+        // }
+        // else if (tid%4==3 and quadrant==3){
+        //     Insert(Particles[i]);
+        // }
+        Insert(Particles[i]);
+    }
+    Monople(root);                                        //initialize all monople of nodes in whole tree
+
+}
+QuadrupleTree::QuadrupleTree(double theta,std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
+    PtcVectorPtr = &Particles;
+    THETA = theta;
     root = new TreeNode;                                  // allocate memory for root
     root->parent = nullptr;
     root->level =0;
@@ -167,6 +203,71 @@ TreeNode *QuadrupleTree::TwoParticleSubtree(TreeNode *ptcTree1, Particle &ptc2,d
                 tempOut = tempOut->SW;
             }
             midX = (mX + MX)/2.; midY = (mY + MY)/2.; midZ = (mZ + MZ)/2.;    // update new mid-line of new region 
+            if (tempOut->level > MAXLEVEL){//this code is used to avoid two particles at the same position or extreamly closed ones.
+
+                std::cout << std::fixed << std::setprecision(10);
+                printf("first particle NE:(%d,%d), second:(%d,%d)\n",firstPtlN,firstPtlE,secPtlN,secPtlE);
+                printf("%d-th particle approximated(level > %d)\n",proxPtclNum,MAXLEVEL);
+                printf("velocity of ptc1:(%f,%f), ptc2:(%f,%f)\n",ptcTree1->ptclPtr->velocity[0],ptcTree1->ptclPtr->velocity[1],ptc2.velocity[0],ptc2.velocity[1]);
+                std::cout<<"position : ptc1:("<<ptcTree1->ptclPtr->posi[0]<<","<<ptcTree1->ptclPtr->posi[1]<<")\n";
+                std::cout<<"           ptc2:("<<ptc2.posi[0]<<","<<ptc2.posi[1]<<")\n";
+                double COMV[2] = {0.,0.};//center of mass velocity
+                double COMR[2] = {0.,0.};//center of mass position
+                double ptc1COMV[2] = {0.,0.};//particle velocity in center of mass frame 
+                double ptc2COMV[2] = {0.,0.};//particle velocity in center of mass frame 
+                
+                COMV[0] = ptcTree1->ptclPtr->velocity[0]*ptcTree1->ptclPtr->mass + ptc2.velocity[0]*ptc2.mass;
+                COMV[1] = ptcTree1->ptclPtr->velocity[1]*ptcTree1->ptclPtr->mass + ptc2.velocity[1]*ptc2.mass;
+                COMV[0] /= (ptcTree1->ptclPtr->mass + ptc2.mass);
+                COMV[1] /= (ptcTree1->ptclPtr->mass + ptc2.mass);
+                COMR[0] = ptcTree1->ptclPtr->posi[0]*ptcTree1->ptclPtr->mass + ptc2.posi[0]*ptc2.mass;
+                COMR[1] = ptcTree1->ptclPtr->posi[1]*ptcTree1->ptclPtr->mass + ptc2.posi[1]*ptc2.mass;
+                
+                ptc1COMV[0] = ptcTree1->ptclPtr->velocity[0] - COMV[0];
+                ptc1COMV[1] = ptcTree1->ptclPtr->velocity[1] - COMV[1];
+                ptc2COMV[0] = ptc2.velocity[0] - COMV[0];
+                ptc2COMV[1] = ptc2.velocity[1] - COMV[1];
+                
+                double oldDistant{0.};
+                double newDistant{0.};
+                
+                oldDistant += (ptcTree1->ptclPtr->posi[0] - ptc2.posi[0])*(ptcTree1->ptclPtr->posi[0] - ptc2.posi[0]);
+                oldDistant += (ptcTree1->ptclPtr->posi[1] - ptc2.posi[1])*(ptcTree1->ptclPtr->posi[1] - ptc2.posi[1]);
+                
+                if (((ptc1COMV[0])*(ptc1COMV[0])+(ptc1COMV[1])*(ptc1COMV[1]))<1e-5){
+                    ptcTree1->ptclPtr->posi[0] = (MX+ midX)/2.;
+                    ptcTree1->ptclPtr->posi[1] = (MY+ midY)/2.;
+                    ptc2.posi[0] = (mX+ midX)/2.;
+                    ptc2.posi[1] = (mY+ midY)/2.;
+                }
+                else{
+                    if (ptc1COMV[0]>0){  ptcTree1->ptclPtr->posi[0] = (MX+ midX)/2.;}
+                    else{ptcTree1->ptclPtr->posi[0] = (mX+ midX)/2.;}
+                    if (ptc1COMV[1]>0){  ptcTree1->ptclPtr->posi[1] = (MY+ midY)/2.;}
+                    else{ptcTree1->ptclPtr->posi[1] = (mY+ midY)/2.;}
+                    if (ptc2COMV[0]>0){  ptc2.posi[0] = (MX+ midX)/2.;}
+                    else{ptc2.posi[0] = (mX+ midX)/2.;}
+                    if (ptc2COMV[1]>0){  ptc2.posi[1] = (MY+ midY)/2.;}
+                    else{ptc2.posi[1] = (mY+ midY)/2.;}
+                }
+                newDistant += (ptcTree1->ptclPtr->posi[0] - ptc2.posi[0])*(ptcTree1->ptclPtr->posi[0] - ptc2.posi[0]);
+                newDistant += (ptcTree1->ptclPtr->posi[1] - ptc2.posi[1])*(ptcTree1->ptclPtr->posi[1] - ptc2.posi[1]);
+
+                proxPtclNum+=1;
+                firstPtlN = ptcTree1->ptclPtr->posi[1] > midY;                    // determin each Particle in which part of subregion
+                firstPtlE = ptcTree1->ptclPtr->posi[0] > midX;
+                secPtlN = ptc2.posi[1] > midY;
+                secPtlE = ptc2.posi[0] > midX;
+                
+                printf("conv (%f,%f)\n",COMV[0],COMV[1]);
+                printf("conv ptc1:(%f,%f), ptc2:(%f,%f)\n",ptc1COMV[0],ptc1COMV[1],ptc2COMV[0],ptc2COMV[1]);
+                // printf("old distant: %f, new: %f\n",oldDistant,newDistant);
+                std::cout<<"new posi: ptc1:("<<ptcTree1->ptclPtr->posi[0]<<","<<ptcTree1->ptclPtr->posi[1]<<")\n";
+                std::cout<<"          ptc2:("<<ptc2.posi[0]<<","<<ptc2.posi[1]<<")\n";
+                // printf("position of new ptc1:(%f,%f), ptc2:(%f,%f)\n",ptcTree1->ptclPtr->posi[0],ptcTree1->ptclPtr->posi[1],ptc2.posi[0],ptc2.posi[1]);
+                printf("first particle NE:(%d,%d), second:(%d,%d)\n\n\n",firstPtlN,firstPtlE,secPtlN,secPtlE);
+                
+            }
             firstPtlN = ptcTree1->ptclPtr->posi[1] > midY;                    // determin each Particle in which part of subregion
             firstPtlE = ptcTree1->ptclPtr->posi[0] > midX;
             secPtlN = ptc2.posi[1] > midY;
