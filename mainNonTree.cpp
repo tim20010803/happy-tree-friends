@@ -15,8 +15,14 @@ int main() {
     // double starttime =omp_get_wtime();
     start_t = clock();
     
+    // set parameter
     int particleNum = 100; // number of particle
     double r = 1000; // radius of the initial disk
+    double v_norm = 1e-3; // the coefficient of velocity
+    double pos_range = 1000.; // the position range of the random number
+    double vec_range = 100.; // the velocity range of the random number
+
+
     std::vector<Particle> particles;
     
     // produce random seed
@@ -24,10 +30,10 @@ int main() {
     std::mt19937 gen(rd());
     // set random range
     std::uniform_real_distribution<double> massDist(1.0, 10.0);
-    std::uniform_real_distribution<double> xDist(-1000.0, 1000.0); 
-    std::uniform_real_distribution<double> yDist(-1000.0, 1000.0);
-    std::uniform_real_distribution<double> velocityXDist(-1000.0, 1000.0);
-    std::uniform_real_distribution<double> velocityYDist(-1000.0, 1000.0);
+    std::uniform_real_distribution<double> xDist(-1 * pos_range, pos_range); 
+    std::uniform_real_distribution<double> yDist(-1 * pos_range, pos_range);
+    std::uniform_real_distribution<double> velocityXDist(-1 * vec_range, vec_range);
+    std::uniform_real_distribution<double> velocityYDist(-1 * vec_range, vec_range);
 
     while ( particles.size() < particleNum ){ 
         // set parameter  
@@ -42,11 +48,10 @@ int main() {
             Particle particle;
             
             // compute the velocity and the acceleratiion
-            double vx = - d * y / d + delta_vx;
-            double vy = d * x / d + delta_vy;
-            double a = m / (d * d);
-            double ax = - a * x / d ;
-            double ay = - a * x / d;
+            double vx = - v_norm * d * d * y / d + delta_vx;
+            double vy = v_norm * d * d * x / d + delta_vy;
+            double ax = 0 ;
+            double ay = 0;
 
             // add the particle initial condition
             particle.mass = m;
@@ -64,17 +69,18 @@ int main() {
 
 
     // Input time and time step
-    double t=0.04*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
+    double t=4.0*M_PI/pow( G_CONST*1000000000,0.5), dt=0.01;
+    int num_steps = t / dt;
 
     // Perform simulation
-    int num_steps = 10000;
+    //int num_steps = 10000;
     calculate_gravity(particles);
     // make a new file
     std::ofstream file("mainNonTree_data.csv");
     file << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
     
     // put the data into the file
-    for (int time = 0; time <= num_steps; time += 1000){
+    for (int step = 0; step <= num_steps; step++){
         Verlet_velocity(particles, dt);
         for (int i = 0; i < particles.size(); i++)
         {
@@ -91,7 +97,7 @@ int main() {
             std::vector<double> system_angular_momentum = calculate_system_angular_momentum(particles);
 
 
-            file << time << "," << p  << "," << mass << "," 
+            file << step * dt  << "," << p  << "," << mass << "," 
                 << posX << "," << posY << "," << vecX << "," << vecY << "," 
                 << accX << "," << accY << "," << system_energy << "," 
                 << system_momentum[0] << "," << system_momentum[1] << "," 

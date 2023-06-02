@@ -22,10 +22,10 @@ def set_figure_index():
     ax[1].yaxis.label.set_fontsize(font_size)
     ax[1].yaxis.set_label_position('right')
 
-    ax[0].set_xlim( x_min, x_MAX )
-    ax[0].set_ylim( x_min, x_MAX )
-    ax[1].set_xlim( x_min, x_MAX )
-    ax[1].set_ylim( x_min, x_MAX )
+    ax[0].set_xlim( -1 * x_range, x_range )
+    ax[0].set_ylim( -1 * x_range, x_range )
+    ax[1].set_xlim( -1 * x_range, x_range )
+    ax[1].set_ylim( -1 * x_range, x_range )
     ax[1].yaxis.tick_right()
 
     ax[0].tick_params(axis='both', labelsize=5)
@@ -64,12 +64,14 @@ nstep_per_image = 1           # plotting frequency
 
 def update( frame ):
 
-    index = frame * len(data_non['Particle'].unique())
-    frame_data = data[data['Time'] == times[frame]] # pick up the data at the same time
+    index = frame * len(data_non['Particle'].unique()) # the index of the momentum and the angular momentum
+    time_gap = 1 # the period per frame
+
+    frame_data = data[data['Time'] == times[frame * time_gap]] # pick up the data at the same time
     positions_x = frame_data['PositionX'].tolist()
     positions_y = frame_data['PositionY'].tolist()
 
-    frame_data_non = data_non[data_non['Time'] == times[frame]]
+    frame_data_non = data_non[data_non['Time'] == times[frame * time_gap]]
     positions_x_non = frame_data_non['PositionX'].tolist()
     positions_y_non = frame_data_non['PositionY'].tolist()
 
@@ -95,18 +97,17 @@ def update( frame ):
 
     set_figure_index()
 
-    fig.suptitle('time = %d' % ( times[frame] ), c='blue')
+    fig.suptitle('time = %.5f' % ( times[frame] ), c='blue')
     
-    #ax[0].text( 1000, 1200, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right',horizontalalignment='center', verticalalignment='center' )
-    ax[1].text( 1300, 1200, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', horizontalalignment='center', verticalalignment='center' )
+    #fig.text( 1000, 1200, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right',horizontalalignment='center', verticalalignment='center' )
+    ax[1].text( 3300, 3200, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', horizontalalignment='center', verticalalignment='center' )
     
 
 # set the particle number
 num_particles = len(data['Particle'].unique())
 
 # set the range of the figure 
-x_min = -1000.0
-x_MAX = 1000.0
+x_range = 3000.0
 
 # create figure
 fig, ax = plt.subplots( 1, 2, sharex=False, sharey=False, dpi=200 )
