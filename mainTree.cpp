@@ -17,15 +17,21 @@ int main() {
     // double starttime =omp_get_wtime();
     start_t = clock();
 
+    // set parameter
     int particleNum = 10000; // number of particle
-    double r = mX/10.; // radius of the initial disk
+    double grid_range = 10000.; // the range of the Tree
+    double r = grid_range/10.; // radius of the initial disk
+    double v_norm = 1e-3; // the coefficient of velocity
+    double pos_range = 1000.; // the position range of the random number
+    double vec_range = 100.; // the velocity range of the random number
+    
 
-    double mX = -10000.;
-    double mY = -10000.;
-    double mZ = -10000.;
-    double MX = 10000.;
-    double MY = 10000.;
-    double MZ = 10000.;
+    // double mX = -10000.;
+    // double mY = -10000.;
+    // double mZ = -10000.;
+    // double MX = 10000.;
+    // double MY = 10000.;
+    // double MZ = 10000.;
 
     std::vector<Particle> particles;
     
@@ -34,10 +40,10 @@ int main() {
     std::mt19937 gen(rd());
     // set random range
     std::uniform_real_distribution<double> massDist(1.0, 10.0);
-    std::uniform_real_distribution<double> xDist(mX/10., MX/10.);
-    std::uniform_real_distribution<double> yDist(mY/10., MY/10.);
-    std::uniform_real_distribution<double> velocityXDist(-1.0, 1.0);
-    std::uniform_real_distribution<double> velocityYDist(-1.0, 1.0);
+    std::uniform_real_distribution<double> xDist(-1 * pos_range, pos_range); 
+    std::uniform_real_distribution<double> yDist(-1 * pos_range, pos_range);
+    std::uniform_real_distribution<double> velocityXDist(-1 * vec_range, vec_range);
+    std::uniform_real_distribution<double> velocityYDist(-1 * vec_range, vec_range);
 
     while ( particles.size() < particleNum ){   
         // set parameter 
@@ -52,11 +58,10 @@ int main() {
             Particle particle;
             
             // compute the velocity and the acceleratiion
-            double vx = - d * y / d + delta_vx;
-            double vy = d * x / d + delta_vy;
-            double a = m / (d * d);
-            double ax = - a * x / d;
-            double ay = - a *y / d;
+            double vx = - v_norm * d * d * y / d + delta_vx;
+            double vy = v_norm * d * d * x / d + delta_vy;
+            double ax = 0;
+            double ay = 0;
 
             // add the particle initial condition
             particle.mass = m;
@@ -73,10 +78,11 @@ int main() {
     }
 
     // build the tree
-    QuadrupleTree T(particles, mX, mY, mZ, MX, MY, MZ); 
+    QuadrupleTree T(particles, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range); 
 
     // Input time and time step
     double t=0.04*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
+    int num_steps = t / dt;
 
     // Perform simulation
     // int num_steps = t / dt;
@@ -88,8 +94,8 @@ int main() {
     file << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
 
     // put the data into the file
-    for (int time = 0; time <= num_steps; tim += 1000){
-        Verlet_velocity_Tree(particles, dt, mX, mY, mZ, MX, MY, MZ);
+    for (int step = 0; step <= num_steps; step++){
+        Verlet_velocity_Tree(particles, dt, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range);
         for (int i = 0; i < particles.size(); i++)
         {
             double p = i+1;
