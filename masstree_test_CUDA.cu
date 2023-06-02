@@ -5,11 +5,13 @@
 #include <omp.h>
 #include <random>
 
+
 // Define particle structure
 struct Particle {
     float posi[2];
     float velocity[2];
     float acceleration[2];
+    float acceleration_prev[2];
     float mass;
 };
 
@@ -51,49 +53,48 @@ float calculate_system_energy(const std::vector<Particle>& particles, float G) {
 
 
 
-__global__ void calculate_gravity_cuda_kernel(Particle* particles, float G, int num_particles) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void simulate_particles_cuda_kernel(Particle* particles, const float* particle_masses, double G, double dt, int num_particles) {
+    extern __shared__ Particle sharedParticles[];
 
-    if (index < num_particles) {
-        Particle& p1 = particles[index];
-
-        for (int j = 0; j < num_particles; j++) {
-            if (j != index) {
-                Particle& p2 = particles[j];
-                float dx = p2.posi[0] - p1.posi[0];
-                float dy = p2.posi[1] - p1.posi[1];
-                float dist_squared = dx * dx + dy * dy;
-                float dist_cubed = dist_squared * sqrt(dist_squared);
-
-                float force_magnitude = G * p1.mass * p2.mass / dist_cubed;
-                float force_x = force_magnitude * dx;
-                float force_y = force_magnitude * dy;
-
-                atomicAdd(&p1.acceleration[0], force_x / p1.mass);
-                atomicAdd(&p1.acceleration[1], force_y / p1.mass);
-
-
-            }
-        }
-    }
-}
-
-__global__ void Verlet_velocity_cuda_kernel(Particle* particles, float G, float dt, int num_particles) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (index < num_particles) {
         Particle& p = particles[index];
+        Particle& shared_p = sharedParticles[threadIdx.x];
 
-        p.velocity[0] += p.acceleration[0] * dt;
-        p.velocity[1] += p.acceleration[1] * dt;
+        shared_p = p;
 
-        p.posi[0] += p.velocity[0] * dt;
-        p.posi[1] += p.velocity[1] * dt;
+        __syncthreads();
 
-        p.acceleration[0] = 0.0;
-        p.acceleration[1] = 0.0;
+        for (int j = 0; j < num_particles; j++) {
+            if (j != index) {
+                Particle& other = sharedParticles[j];
+                float dx = other.posi[0] - shared_p.posi[0];
+                float dy = other.posi[1] - shared_p.posi[1];
+                float dist_squared = dx * dx + dy * dy;
+                float dist_cubed = dist_squared * sqrt(dist_squared);
+
+                float force_magnitude = G * shared_p.mass * particle_masses[j] / dist_cubed;
+                float force_x = force_magnitude * dx;
+                float force_y = force_magnitude * dy;
+
+                atomicAdd(&shared_p.acceleration[0], force_x / shared_p.mass);
+                atomicAdd(&shared_p.acceleration[1], force_y / shared_p.mass);
+            }
+        }
+
+        p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;
+        p.posi[1] += p.velocity[1] * dt + 0.5 * p.acceleration[1] * dt * dt;
+        p.velocity[0] += 0.5 * (p.acceleration[0] + p.acceleration_prev[0]) * dt;
+        p.velocity[1] += 0.5 * (p.acceleration[1] + p.acceleration_prev[1]) * dt;
+        p.acceleration_prev[0] = p.acceleration[0];
+        p.acceleration_prev[1] = p.acceleration[1];
+
+        p.acceleration[0] = 0.0f;
+        p.acceleration[1] = 0.0f;
     }
 }
+
 
 int main() {
     // Define simulation parameters
@@ -103,13 +104,13 @@ int main() {
     std::cout << std::fixed << std::setprecision(12);
 
     // Input time and time step
-    float t = 4.0 * M_PI / sqrt(G * 1000000000);
+    float t = 0.001;
     float dt = 0.001;
 
     // Perform simulation
     int num_steps = t / dt;
 
-// Random number generator
+    // Random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dist_pos(-1.0f, 1.0f);
@@ -118,8 +119,8 @@ int main() {
 
     // Generate particles
     std::vector<Particle> particles;
-    particles.reserve(10000);
-    for (int i = 0; i < 10000; ++i) {
+    particles.reserve(1000000);
+    for (int i = 0; i < 1000000; ++i) {
         Particle particle;
         particle.posi[0] = dist_pos(gen);
         particle.posi[1] = dist_pos(gen);
@@ -131,26 +132,37 @@ int main() {
         particles.push_back(particle);
     }
 
-
     float start_time = omp_get_wtime();
 
-    // Perform Verlet simulation using CUDA
+    // Transfer particles to device memory
     Particle* d_particles;
     size_t particlesSize = particles.size() * sizeof(Particle);
-
     cudaMalloc((void**)&d_particles, particlesSize);
     cudaMemcpy(d_particles, particles.data(), particlesSize, cudaMemcpyHostToDevice);
 
-    int blockSize = 256;
+    // Transfer particle masses to constant memory
+    float* d_masses;
+    size_t particleMassesSize = particles.size() * sizeof(float);
+    cudaMalloc((void**)&d_masses, particleMassesSize);
+    std::vector<float> particle_masses(particles.size());
+    for (int i = 0; i < particles.size(); ++i) {
+        particle_masses[i] = particles[i].mass;
+    }
+    cudaMemcpy(d_masses, particle_masses.data(), particleMassesSize, cudaMemcpyHostToDevice);
+
+    // Launch kernel
+    int blockSize = 1024;
     int gridSize = (particles.size() + blockSize - 1) / blockSize;
 
-    for (int i = 0; i <= num_steps; i++) {
-        calculate_gravity_cuda_kernel<<<gridSize, blockSize>>>(d_particles, G, particles.size());
-        Verlet_velocity_cuda_kernel<<<gridSize, blockSize>>>(d_particles, G, dt, particles.size());
-    }
+    int sharedMemSize = blockSize * sizeof(Particle);
+    simulate_particles_cuda_kernel<<<gridSize, blockSize, sharedMemSize>>>(d_particles, d_masses, G, dt, particles.size());
 
+    // Transfer particles back to host memory
     cudaMemcpy(particles.data(), d_particles, particlesSize, cudaMemcpyDeviceToHost);
+
+    // Cleanup
     cudaFree(d_particles);
+    cudaFree(d_masses);
 
     float end_time = omp_get_wtime();
 
@@ -161,6 +173,9 @@ int main() {
     std::cout << "System Momentum (X, Y): (" << system_momentum[0] << ", " << system_momentum[1] << ")" << std::endl;
     std::cout << "System Energy: " << system_energy << std::endl;
     std::cout << "Total Execution Time: " << end_time - start_time << " seconds" << std::endl;
+    std::cout << "Particles: " << particles.size() << std::endl;
+
 
     return 0;
 }
+
