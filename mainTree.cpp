@@ -15,15 +15,61 @@
 int main() {
     clock_t start_t, end_t;
     // double starttime =omp_get_wtime();
-    start_t = clock();
+
+    // Particle a;
+    // a.posi = {1.,6.,4.};
+    // a.velocity = {4.,3.,2.};
+    // a.mass = {12.};
+    // a.acceleration = {0., 0., 0.};
+    // Particle b;
+    // b.posi = {2.,7.,8.};
+    // b.velocity = {1.,6.,7.};
+    // b.mass = {23.};
+    // b.acceleration = {0., 0., 0.};
+    // Particle c;
+    // c.posi = {3.,5.,8.};
+    // c.velocity = {1.,6.,7.};
+    // c.mass = {212.};
+    // c.acceleration = {0., 0., 0.};
+    // Particle d;
+    // d.posi = {4.,6.,8.};
+    // d.velocity = {8.,6.,7.};
+    // d.mass = {62.};
+    // d.acceleration = {0., 0., 0.};
+    // std::vector<Particle> particles = {a,b,c,d};
+    // std::random_device rd;
+    // std::mt19937_64 gen(rd());
+    // std::uniform_real_distribution<> dist(-1000,1000);
+    // const int particleNum = 100000;//11.653364000000secondsif100
+    // for (int i = 0; i < particleNum-4; i++){
+    //     Particle a;
+    //     double rand3[3]={0};
+    //     
+    //     for (int j = 0; j < 3; j++){
+    //         // rand3[j] = static_cast<double>(rand() % (int)(1e10))/1e10;
+    //         rand3[j] = dist(gen);
+    //     }
+    //     a.posi = {rand3[0],rand3[1],rand3[2]};
+    //     for (int j = 0; j < 3; j++){
+    //         // rand3[j] = static_cast<double>(rand() % (int)(1e9))/1e9;
+    //         rand3[j] = dist(gen);
+    //     }
+    //     a.velocity = {rand3[0],rand3[1],rand3[2]};
+    //     a.mass = static_cast<double>(rand() % 1000)/10.;
+    //     a.acceleration={0.,0.,0.};
+    //     particles.push_back(a);
+    // }
+    // std::cout << std::fixed << std::setprecision(12);
 
     // set parameter
-    int particleNum = 10000; // number of particle
-    double grid_range = 10000.; // the range of the Tree
+    int particleNum = 1000; // number of particle
+    double grid_range = 1000.; // the range of the Tree
     double r = grid_range/10.; // radius of the initial disk
     double v_norm = 1e-3; // the coefficient of velocity
     double pos_range = 1000.; // the position range of the random number
     double vec_range = 100.; // the velocity range of the random number
+    double t=0.04*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001; // Input time and time step
+    int num_steps = t / dt;
     
 
     // double mX = -10000.;
@@ -42,6 +88,7 @@ int main() {
     std::uniform_real_distribution<double> massDist(1.0, 10.0);
     std::uniform_real_distribution<double> xDist(-1 * pos_range, pos_range); 
     std::uniform_real_distribution<double> yDist(-1 * pos_range, pos_range);
+    std::uniform_real_distribution<double> wDist(0, 1);
     std::uniform_real_distribution<double> velocityXDist(-1 * vec_range, vec_range);
     std::uniform_real_distribution<double> velocityYDist(-1 * vec_range, vec_range);
 
@@ -50,11 +97,12 @@ int main() {
         double m = massDist(gen);
         double x = xDist(gen);
         double y = yDist(gen);
+        double w = wDist(gen);
         double delta_vx = velocityXDist(gen);
         double delta_vy = velocityYDist(gen);
         double d = sqrt(x*x + y*y);
         // let the particles in the range of a disk
-        if ( d <=  r ){
+        if ( d <=  r and  w*pos_range*pos_range*pos_range >= d*d*d ){
             Particle particle;
             
             // compute the velocity and the acceleratiion
@@ -76,29 +124,50 @@ int main() {
             particles.push_back(particle);
         }
     }
-
+    start_t = clock();
     // build the tree
     QuadrupleTree T(particles, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range); 
+    std::cout << "theta: " << T.THETA<<"\n";
+    // for (int i = 0; i < particles.size(); i++)
+    // {
+    //     std::cout << "Particle mass: " << particles[i].mass << std::endl;
+    //     std::cout << "Particle position: " << particles[i].posi[0] << ", " << particles[i].posi[1] << std::endl;
+    //     std::cout << "Particle velocity: " << particles[i].velocity[0] << ", " << particles[i].velocity[1] << std::endl;
+    //     std::cout << "Particle acceleration: " << particles[i].acceleration[0] << ", " << particles[i].acceleration[1] << std::endl;
 
-    // Input time and time step
-    double t=0.04*M_PI/pow( G_CONST*1000000000,0.5), dt=0.001;
-    int num_steps = t / dt;
+    // }
 
-    // Perform simulation
-    // int num_steps = t / dt;
-    int num_steps = 10000;
     T.TreeForce();
     T.~QuadrupleTree();
+
+    // for (int i = 0; i < particles.size(); i++)
+    // {
+    //     std::cout<<i<<"th" << "Particle mass: " << particles[i].mass << std::endl;
+    //     std::cout<<i<<"th" << "Particle position: " << particles[i].posi[0] << ", " << particles[i].posi[1] << std::endl;
+    //     std::cout<<i<<"th" << "Particle velocity: " << particles[i].velocity[0] << ", " << particles[i].velocity[1] << std::endl;
+    //     std::cout<<i<<"th" << "Particle acceleration: " << particles[i].acceleration[0] << ", " << particles[i].acceleration[1] << std::endl;
+
+    // }
+
+    // if(num_steps != 0){
+    //     for (int i = 0; i <= num_steps; i++) {
+    //         Verlet_velocity_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+    //         std::cout<<"running at "<<i<<"-th step\n";
+    //         // AB_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+    //         // RK4_Tree(particles, dt,-10000.,-10000.,-10000.,10000.,10000.,10000.);
+    //     }
+    // }
+
+
     // make a new file
     std::ofstream file("mainTree_data.csv");
     file << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
 
     // put the data into the file
     for (int step = 0; step <= num_steps; step++){
-        Verlet_velocity_Tree(particles, dt, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range);
         for (int i = 0; i < particles.size(); i++)
         {
-            double p = i+1;
+            int p = i+1;
             double mass = particles[i].mass;
             double posX = particles[i].posi[0];
             double posY = particles[i].posi[1];
@@ -117,12 +186,13 @@ int main() {
             << system_momentum[0] << "," << system_momentum[1] << "," 
             << system_angular_momentum[0] << "," << system_angular_momentum[1] << std::endl;
         }
+        Verlet_velocity_Tree(particles, dt, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range);
     }
     file.close();
     
     end_t = clock();
-    std::vector<double> system_momentum = calculate_system_momentum(particles);
-    double system_energy = calculate_system_energy(particles);
+    // std::vector<double> system_momentum = calculate_system_momentum(particles);
+    // double system_energy = calculate_system_energy(particles);
     // double endtime =omp_get_wtime();
     double total_t = static_cast<double>(end_t - start_t) / CLOCKS_PER_SEC;
     //std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;

@@ -60,18 +60,17 @@ L_total_non0 = (Lx_total_non[0]**2 + Ly_total_non[0]**2)**0.5
 
 # plotting parameters
 nstep_per_image = 1           # plotting frequency
-
+time_gap = 100 # the period per frame
 
 def update( frame ):
 
     index = frame * len(data_non['Particle'].unique()) # the index of the momentum and the angular momentum
-    time_gap = 1 # the period per frame
 
-    frame_data = data[data['Time'] == times[frame * time_gap]] # pick up the data at the same time
+    frame_data = data[data['Time'] == times[frame]] # pick up the data at the same time
     positions_x = frame_data['PositionX'].tolist()
     positions_y = frame_data['PositionY'].tolist()
 
-    frame_data_non = data_non[data_non['Time'] == times[frame * time_gap]]
+    frame_data_non = data_non[data_non['Time'] == times[frame]]
     positions_x_non = frame_data_non['PositionX'].tolist()
     positions_y_non = frame_data_non['PositionY'].tolist()
 
@@ -122,7 +121,7 @@ random_colors /= 255.0
 '''
 # create movie
 nframe = len(data_non['Time'].unique()) # arbitrarily large
-ani   = animation.FuncAnimation( fig, func=update, frames=nframe, interval=200, repeat=False )
+ani   = animation.FuncAnimation( fig, func=update, frames=nframe//time_gap, interval=200, repeat=False )
 
 plt.show()
 
