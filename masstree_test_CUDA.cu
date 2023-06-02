@@ -4,6 +4,7 @@
 #include <vector>
 #include <omp.h>
 #include <random>
+#include <chrono>
 
 
 // Define particle structure
@@ -119,8 +120,8 @@ int main() {
 
     // Generate particles
     std::vector<Particle> particles;
-    particles.reserve(1000000);
-    for (int i = 0; i < 1000000; ++i) {
+    particles.reserve(131072);
+    for (int i = 0; i < 131072; ++i) {
         Particle particle;
         particle.posi[0] = dist_pos(gen);
         particle.posi[1] = dist_pos(gen);
@@ -132,7 +133,8 @@ int main() {
         particles.push_back(particle);
     }
 
-    float start_time = omp_get_wtime();
+    // Start timer
+    auto start = std::chrono::high_resolution_clock::now();
 
     // Transfer particles to device memory
     Particle* d_particles;
@@ -164,7 +166,12 @@ int main() {
     cudaFree(d_particles);
     cudaFree(d_masses);
 
-    float end_time = omp_get_wtime();
+    // End timer
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Calculate duration
+    std::chrono::duration<double> duration = end - start;
+    double seconds = duration.count();
 
     std::vector<float> system_momentum = calculate_system_momentum(particles);
     float system_energy = calculate_system_energy(particles, G);
@@ -172,8 +179,9 @@ int main() {
     std::cout << "Verlet_velocity Time: " << (num_steps) * dt << std::endl;
     std::cout << "System Momentum (X, Y): (" << system_momentum[0] << ", " << system_momentum[1] << ")" << std::endl;
     std::cout << "System Energy: " << system_energy << std::endl;
-    std::cout << "Total Execution Time: " << end_time - start_time << " seconds" << std::endl;
     std::cout << "Particles: " << particles.size() << std::endl;
+    // Output the runtime
+     printf("Runtime: %f seconds\n", seconds);
 
 
     return 0;
