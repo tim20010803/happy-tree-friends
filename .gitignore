@@ -33,4 +33,6 @@
 
 #setting of editor
 .vscode
-masstree_test.cpp
+#original output file
+mainTree_data.csv
+mainTree_data.csv
