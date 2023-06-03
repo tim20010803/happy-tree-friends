@@ -34,4 +34,5 @@
 #setting of editor
 .vscode
 #original output file
-main*.csv
+mainTree_data.csv
+mainTree_data.csv
