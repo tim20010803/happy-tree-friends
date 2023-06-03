@@ -38,7 +38,7 @@ void random_data( int particleNum, double r, double v_norm, double pos_range, do
         double delta_vy = velocityYDist(gen);
         double d = sqrt(x*x + y*y);
         // let the particles in the range of a disk
-        if ( d <=  r and w*pos_range*pos_range*pos_range >= d*d*d )
+        if ( d <=  r and exp(-5.*d/(1.414*pos_range)) > w )//w*pos_range*pos_range*pos_range >= d*d*d 
         {
             // compute the velocity and the acceleratiion
             double vx = - v_norm * d * d * y / d + delta_vx;
@@ -81,7 +81,7 @@ void random_data( int particleNum, double r, double v_norm, double pos_range, do
 
 int main()
 {
-    int particleNum = 10; // number of particle
+    int particleNum = 500; // number of particle
     double r = 1000; // radius of the initial disk
     double v_norm = 1e-3; // the coefficient of velocity
     double pos_range = 1000.; // the position range of the random number
