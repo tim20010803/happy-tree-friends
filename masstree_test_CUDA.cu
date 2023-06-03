@@ -9,6 +9,7 @@
 #include <string>
 #include <sstream>
 #define G_CONST 6.67428e-11
+#define r_epsilon 1e-10
 // Define particle structure
 struct Particle {
     float posi[2];
@@ -105,7 +106,7 @@ __global__ void simulate_particles_cuda_kernel(Particle* particles, const float*
                 float dist_squared = dx * dx + dy * dy;
                 float dist_cubed = dist_squared * sqrt(dist_squared);
 
-                float force_magnitude = G * shared_p.mass * particle_masses[j] / dist_cubed;
+                float force_magnitude = G * shared_p.mass * particle_masses[j] / (dist_cubed + r_epsilon * r_epsilon* r_epsilon);
                 float force_x = force_magnitude * dx;
                 float force_y = force_magnitude * dy;
 

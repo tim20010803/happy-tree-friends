@@ -1,5 +1,6 @@
 #ifndef G_CONST
 #define G_CONST 6.67428e-11
+#define r_epsilon 1e-10
 #endif
 
 #ifndef PARTICLE

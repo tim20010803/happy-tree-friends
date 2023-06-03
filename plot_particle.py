@@ -100,7 +100,7 @@ def update( frame ):
     # (x)ax[0].text( 1000, 1200, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right',horizontalalignment='center', verticalalignment='center' )
     # (x)ax[1].text( 3750, 3700, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', horizontalalignment='center', verticalalignment='center' )
     
-    #fig.text( 0.47, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right', va='center')
+    fig.text( 0.47, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right', va='center')
     fig.text( 0.95, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', va='center')
 
 # set the particle number
@@ -124,7 +124,8 @@ random_colors /= 255.0
 nframe = len(data_non['Time'].unique()) # arbitrarily large
 print(nframe)
 print(nframe//time_gap)
-print(len(data['Time']))
+print("Tree data length:",len(data['Time']))
+print("NonTree data length:",len(data_non['Time']))
 ani   = animation.FuncAnimation( fig, func=update, frames=nframe//time_gap, interval=1, repeat=False )
 
 plt.show()

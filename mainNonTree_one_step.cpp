@@ -61,15 +61,15 @@ int main() {
         particles.push_back(particle);
     }
 
-    int index = 1;
-    for (const auto& particle : particles) {        
-        std::cout << "Particle: " << index << ", Mass: " << particle.mass 
-        << ", PositionX: " << particle.posi[0] << ", PositionY: " << particle.posi[1] 
-        << ", VectorX: " << particle.velocity[0] << ", VectorY: " << particle.velocity[1] 
-        << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
-        index++;
-    }
-    double t=0.05 ,dt = 0.005;
+    // int index = 1;
+    // for (const auto& particle : particles) {        
+    //     std::cout << "Particle: " << index << ", Mass: " << particle.mass 
+    //     << ", PositionX: " << particle.posi[0] << ", PositionY: " << particle.posi[1] 
+    //     << ", VectorX: " << particle.velocity[0] << ", VectorY: " << particle.velocity[1] 
+    //     << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
+    //     index++;
+    // }
+    double t=3. ,dt = 0.005;
     int num_steps = t / dt;
     std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
     std::cout << particleNum <<  "particles"<< std::endl;
@@ -80,7 +80,7 @@ int main() {
     // make a new file
     std::ofstream fileOut("mainNonTree_data.csv");
     fileOut << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
-    
+    int precision = std::min<int>(std::numeric_limits<double>::digits10 + 1,10);
     // put the data into the file
     for (int step = 0; step <= num_steps; step++){
         for (int i = 0; i < particles.size(); i++)
@@ -98,7 +98,8 @@ int main() {
             std::vector<double> system_angular_momentum = calculate_system_angular_momentum(particles);
 
 
-            fileOut << step * dt  << "," << p  << "," << mass << "," 
+            fileOut  << std::setprecision(precision)
+                << std::scientific << step * dt  << "," << p  << "," << mass << "," 
                 << posX << "," << posY << "," << vecX << "," << vecY << "," 
                 << accX << "," << accY << "," << system_energy << "," 
                 << system_momentum[0] << "," << system_momentum[1] << "," 

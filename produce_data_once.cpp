@@ -30,7 +30,7 @@ void random_data( int particleNum, double r, double v_norm, double pos_range, do
     while ( PositionX.size() < particleNum )
     {   
         // set parameter  
-        double m = massDist(gen);
+        double m = massDist(gen)*1e12;
         double x = xDist(gen);
         double y = yDist(gen);
         double w = wDist(gen);

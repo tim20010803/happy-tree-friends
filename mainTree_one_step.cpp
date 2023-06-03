@@ -23,6 +23,7 @@ int main() {
     std::string line; // each line of the file data
     bool isFirstLine = true; // if line is the first line or not
     int particleNum =0;
+    int precision = std::min<int>(std::numeric_limits<double>::digits10 + 1,10);
     // to get all of the data
     while (std::getline(file, line)) {
         // delete the first line because the first line is
@@ -62,21 +63,21 @@ int main() {
         particles.push_back(particle);
         particleNum++;
     }
-    double grid_range = 5000.; // the range of the Tree
-    double t=0.05 ,dt = 0.005;
+    double grid_range = 1000.; // the range of the Tree
+    double t=3. ,dt = 0.005;
     int num_steps = t / dt;
     std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
     std::cout << particleNum <<  "particles"<< std::endl;
     std::cout << num_steps <<  "steps"<< std::endl;
 
-    int index = 1;
-    for (const auto& particle : particles) {       
-        std::cout << "Particle: " << index << ", Mass: " << particle.mass 
-        << ", PositionX: " << particle.posi[0] << ", PositionY: " << particle.posi[1] 
-        << ", VectorX: " << particle.velocity[0] << ", VectorY: " << particle.velocity[1] 
-        << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
-        index++;
-    }
+    // int index = 1;
+    // for (const auto& particle : particles) {    
+    //     std::cout << "Particle: " << index << ", Mass: " << particle.mass 
+    //     << ", PositionX: " << particle.posi[0] << ", PositionY: " << particle.posi[1] 
+    //     << ", VectorX: " << particle.velocity[0] << ", VectorY: " << particle.velocity[1] 
+    //     << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
+    //     index++;
+    // }
 
     // build the tree
     QuadrupleTree T(particles, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range); 
@@ -123,13 +124,15 @@ int main() {
             std::vector<double> system_angular_momentum = calculate_system_angular_momentum(particles);
 
 
-            fileOut << step * dt << "," << p  << "," << mass << "," 
+            fileOut<< std::setprecision(precision)
+            << std::scientific  << step * dt << "," << p  << "," << mass << "," 
             << posX << "," << posY << "," << vecX << "," << vecY << "," 
             << accX << "," << accY << "," << system_energy << "," 
             << system_momentum[0] << "," << system_momentum[1] << "," 
             << system_angular_momentum[0] << "," << system_angular_momentum[1] << std::endl;
         }
         Verlet_velocity_Tree(particles, dt, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range);
+        grid_range *= 1.0023; //graduate expand region
     }
     file.close();
     

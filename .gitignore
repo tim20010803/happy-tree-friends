@@ -33,4 +33,5 @@
 
 #setting of editor
 .vscode
-masstree_test.cpp
+#original output file
+main*.csv

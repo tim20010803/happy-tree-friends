@@ -214,7 +214,7 @@ void calculate_gravity(std::vector<Particle>& particles) {
             double dist_cubed = dist_squared * std::sqrt(dist_squared);
 
             // Calculate gravitational force
-            double force_magnitude = G_CONST * p1.mass * p2.mass / dist_cubed;
+            double force_magnitude = G_CONST * p1.mass * p2.mass / (dist_cubed+ r_epsilon * r_epsilon* r_epsilon);
             double force_x = force_magnitude * dx;
             double force_y = force_magnitude * dy;
 
