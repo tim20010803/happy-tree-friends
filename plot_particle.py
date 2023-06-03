@@ -63,7 +63,7 @@ nstep_per_image = 1           # plotting frequency
 time_gap = 1 # the period per frame
 
 def update( frame ):
-
+    
     index = frame * len(data_non['Particle'].unique()) # the index of the momentum and the angular momentum
 
     frame_data = data[data['Time'] == times[frame]] # pick up the data at the same time
@@ -100,8 +100,14 @@ def update( frame ):
     # (x)ax[0].text( 1000, 1200, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right',horizontalalignment='center', verticalalignment='center' )
     # (x)ax[1].text( 3750, 3700, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', horizontalalignment='center', verticalalignment='center' )
     
-    fig.text( 0.47, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right', va='center')
-    fig.text( 0.95, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', va='center')
+
+    #fig.text( 0.47, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right', va='center')
+    #fig.text( 0.95, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', va='center')
+    
+    #Text1.set_text('the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error))
+    Text2.set_text('the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non))
+    
+
 
 # set the particle number
 num_particles = len(data['Particle'].unique())
@@ -113,6 +119,8 @@ x_range = 3000.0
 fig, ax = plt.subplots( 1, 2, sharex=False, sharey=False, dpi=200 )
 #fig.subplots_adjust( hspace=0.0, wspace=0.5 )
 fig.subplots_adjust(left=0.12, right=0.9, bottom=0.05, top=0.95, wspace=0.3)
+Text1 = fig.text( 0.47, 0.78, '', fontsize=8, color='black', ha='right', va='center')
+Text2 = fig.text( 0.95, 0.78, '', fontsize=8, color='black', ha='right', va='center')
 
 set_figure_index()
 '''
