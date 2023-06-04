@@ -115,15 +115,15 @@ __global__ void simulate_particles_cuda_kernel(Particle* particles, const float*
             }
         }
 
-        p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;
-        p.posi[1] += p.velocity[1] * dt + 0.5 * p.acceleration[1] * dt * dt;
-        p.velocity[0] += 0.5 * (p.acceleration[0] + p.acceleration_prev[0]) * dt;
-        p.velocity[1] += 0.5 * (p.acceleration[1] + p.acceleration_prev[1]) * dt;
-        p.acceleration_prev[0] = p.acceleration[0];
-        p.acceleration_prev[1] = p.acceleration[1];
+        // p.posi[0] += p.velocity[0] * dt + 0.5 * p.acceleration[0] * dt * dt;
+        // p.posi[1] += p.velocity[1] * dt + 0.5 * p.acceleration[1] * dt * dt;
+        // p.velocity[0] += 0.5 * (p.acceleration[0] + p.acceleration_prev[0]) * dt;
+        // p.velocity[1] += 0.5 * (p.acceleration[1] + p.acceleration_prev[1]) * dt;
+        // p.acceleration_prev[0] = p.acceleration[0];
+        // p.acceleration_prev[1] = p.acceleration[1];
 
-        p.acceleration[0] = 0.0f;
-        p.acceleration[1] = 0.0f;
+        // p.acceleration[0] = 0.0f;
+        // p.acceleration[1] = 0.0f;
     }
 }
 
@@ -212,7 +212,7 @@ int main() {
         particleNum++;
         particles.push_back(particle);
     }
-
+    std::cout << "Particles a: " << particles[0].acceleration[0] << std::endl;
     // int index = 1;
     // for (const auto& particle : particles) {        
     //     std::cout << "Particle: " << index << ", Mass: " << particle.mass 
@@ -221,11 +221,11 @@ int main() {
     //     << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
     //     index++;
     // }
-    double t=0.005 ,dt = 0.005;
-    int num_steps = t / dt;
-    std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
+    double dt = 0.005;
+    // int num_steps = t / dt;
+    // std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
     std::cout << particleNum <<  "particles"<< std::endl;
-    std::cout << num_steps <<  "steps"<< std::endl;
+    // std::cout << num_steps <<  "steps"<< std::endl;
 
     // Start timer
     auto start = std::chrono::high_resolution_clock::now();
@@ -267,13 +267,14 @@ int main() {
     std::chrono::duration<float> duration = end - start;
     float seconds = duration.count();
 
-    std::vector<float> system_momentum = calculate_system_momentum(particles);
-    float system_energy = calculate_system_energy(particles, G_CONST);
+    // std::vector<float> system_momentum = calculate_system_momentum(particles);
+    // float system_energy = calculate_system_energy(particles, G_CONST);
 
-    std::cout << "Verlet_velocity Time: " << (num_steps) * dt << std::endl;
-    std::cout << "System Momentum (X, Y): (" << system_momentum[0] << ", " << system_momentum[1] << ")" << std::endl;
-    std::cout << "System Energy: " << system_energy << std::endl;
+    // std::cout << "Verlet_velocity Time: " << (num_steps) * dt << std::endl;
+    // std::cout << "System Momentum (X, Y): (" << system_momentum[0] << ", " << system_momentum[1] << ")" << std::endl;
+    // std::cout << "System Energy: " << system_energy << std::endl;
     std::cout << "Particles: " << particles.size() << std::endl;
+    std::cout << "Particles a: " << particles[0].acceleration[0] << std::endl;
     // Output the runtime
      printf("Runtime: %f seconds\n", seconds);
 

@@ -41,6 +41,7 @@ private:
     // if a particle in the same region of existing particle in a node 
     // in the original level of first particle
 public:
+    int NThread = 8;
     double THETA {1.0};
     int MAXLEVEL {30};
     int proxPtclNum {0};
@@ -48,7 +49,7 @@ public:
     QuadrupleTree():root(NULL){};
     QuadrupleTree(Particle &firstPtc,double mX,double mY,double mZ,double MX,double MY, double MZ);                // take one particle and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
     QuadrupleTree(std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ);  // take several particles(with type of std::vector) and boundary of all particle to ininitaize the tree, and mX is minX(minimum x), MX is maxX(maxmum x);
-    QuadrupleTree(double theta,std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ);
+    QuadrupleTree(double theta,int thread,std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ);
     ~QuadrupleTree();                  // desturctor (to destroy the whole tree and release the memory space it takes)
     void DeleteNode(TreeNode *Node);                      // delete the Node and its all descendent
     void Insert(Particle& newPtc);                        // insert one particle in the tree

@@ -136,7 +136,7 @@ print("Tree data length:",len(data['Time']))
 print("NonTree data length:",len(data_non['Time']))
 ani   = animation.FuncAnimation( fig, func=update, frames=nframe//time_gap, interval=1, repeat=False )
 
-ani.save('ptc_pos.gif', writer='pillow')
+# ani.save('ptc_pos.gif', writer='pillow')
 plt.show()
 
 

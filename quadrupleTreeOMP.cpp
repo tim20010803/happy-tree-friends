@@ -24,7 +24,6 @@ TreeNode::~TreeNode(){
     if(ptclPtr != NULL){ptclPtr = NULL;};
     if(monople != NULL){(delete monople);monople = NULL;};
 }
-int NThread = 8;
 int particleQuadrant(Particle p,double mX,double mY,double mZ,double MX,double MY, double MZ){
     double midX=(MX+mX/2.);
     double midY=(MY+mY/2.);
@@ -77,9 +76,10 @@ QuadrupleTree::QuadrupleTree(std::vector<Particle> &Particles,double mX,double m
     Monople(root);                                        //initialize all monople of nodes in whole tree
 
 }
-QuadrupleTree::QuadrupleTree(double theta,std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
+QuadrupleTree::QuadrupleTree(double theta,int thread,std::vector<Particle> &Particles,double mX,double mY,double mZ,double MX,double MY, double MZ){  
     PtcVectorPtr = &Particles;
     THETA = theta;
+    NThread=thread;
     root = new TreeNode;                                  // allocate memory for root
     root->parent = nullptr;
     root->level =0;
