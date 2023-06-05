@@ -38,10 +38,10 @@ int main() {
     
 
     // make a new file
-    std::ofstream fileOut("RuntimeTreeComplex_uni.csv");
+    std::ofstream fileOut("RuntimeTreeComplex_uni2.csv");
     fileOut << "Type,NThread,theta,particleNumber,construct_time(s),force_time(s),total_time(s)" << std::endl;
     int pN=1000;
-    for(int j=0;j<4;j++ )
+    for(int j=0;j<3;j++ )
     {
         // put the data into the fileOut
         for (int Thread = 1; Thread <= 8; Thread++){

@@ -138,152 +138,154 @@ int main() {
     // float t = 0.001;
     // float dt = 0.001;
 
-    // // Perform simulation
+    // Perform simulation
     // int num_steps = t / dt;
-    // int particles_num = 100000;
+    for(int i=1000;i<100000001; i=i*10)
+    {
+        int particles_num = i;
 
-    // Random number generator
-    // std::random_device rd;
-    // std::mt19937 gen(rd());
-    // std::uniform_real_distribution<float> dist_pos(-1.0f, 1.0f);
-    // std::uniform_real_distribution<float> dist_vel(-10.0f, 10.0f);
-    // std::uniform_real_distribution<float> dist_mass(1.0e6f, 1.0e7f);
+        // Random number generator
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dist_pos(-1.0f, 1.0f);
+        std::uniform_real_distribution<float> dist_vel(-10.0f, 10.0f);
+        std::uniform_real_distribution<float> dist_mass(1.0e6f, 1.0e7f);
 
-    // // Generate particles
-    // std::vector<Particle> particles;
-    // particles.reserve(particles_num);
-    // for (int i = 0; i < particles_num; ++i) {
-    //     Particle particle;
-    //     particle.posi[0] = dist_pos(gen);
-    //     particle.posi[1] = dist_pos(gen);
-    //     particle.velocity[0] = dist_vel(gen);
-    //     particle.velocity[1] = dist_vel(gen);
-    //     particle.acceleration[0] = 0.0f;
-    //     particle.acceleration[1] = 0.0f;
-    //     particle.mass = dist_mass(gen);
-    //     particles.push_back(particle);
-    // }
-
-
-
-
-    std::ifstream file("one_step_data.csv");
-    std::vector<Particle> particles; // store the particles
-    std::string line; // each line of the file data
-    bool isFirstLine = true; // if line is the first line or not
-    int particleNum =0;
-    // to get all of the data
-    while (std::getline(file, line)) {
-        // delete the first line because the first line is
-        // "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY"
-        if (isFirstLine) {
-            isFirstLine = false;
-            continue; 
+        // Generate particles
+        std::vector<Particle> particles;
+        particles.reserve(particles_num);
+        for (int i = 0; i < particles_num; ++i) {
+            Particle particle;
+            particle.posi[0] = dist_pos(gen);
+            particle.posi[1] = dist_pos(gen);
+            particle.velocity[0] = dist_vel(gen);
+            particle.velocity[1] = dist_vel(gen);
+            particle.acceleration[0] = 0.0f;
+            particle.acceleration[1] = 0.0f;
+            particle.mass = dist_mass(gen);
+            particles.push_back(particle);
         }
 
-        // set the parameter to store data
-        std::istringstream iss(line);
-        std::string element;
-        std::vector<std::string> elements; 
-        // change the line string into a vector
-        while (std::getline(iss, element, ',')) {
-            elements.push_back(element);
+
+
+
+        // // std::ifstream file("one_step_data.csv_uni_1000000.csv");
+        // std::vector<Particle> particles; // store the particles
+        // std::string line; // each line of the file data
+        // bool isFirstLine = true; // if line is the first line or not
+        // int particleNum =0;
+        // // to get all of the data
+        // while (std::getline(file, line)) {
+        //     // delete the first line because the first line is
+        //     // "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY"
+        //     if (isFirstLine) {
+        //         isFirstLine = false;
+        //         continue; 
+        //     }
+
+        //     // set the parameter to store data
+        //     std::istringstream iss(line);
+        //     std::string element;
+        //     std::vector<std::string> elements; 
+        //     // change the line string into a vector
+        //     while (std::getline(iss, element, ',')) {
+        //         elements.push_back(element);
+        //     }
+
+        //     Particle particle;
+        //     // input data
+        //     double m = std::stod(elements[2]);
+        //     double x = std::stod(elements[3]);
+        //     double y = std::stod(elements[4]);
+        //     double vx = std::stod(elements[5]);
+        //     double vy = std::stod(elements[6]);
+        //     double ax = std::stod(elements[7]);
+        //     double ay = std::stod(elements[8]);
+        //     // add the particle initial condition
+        //     particle.mass = m;
+        //     particle.posi[0]=(x);
+        //     particle.posi[1]=(y);
+        //     particle.velocity[0]=(vx);
+        //     particle.velocity[1]=(vy);
+        //     particle.acceleration[0]=(ax);
+        //     particle.acceleration[1]=(ay);
+
+        //     // add the particle
+        //     particleNum++;
+        //     particles.push_back(particle);
+        // }
+        std::cout << "Particles a: " << particles[0].acceleration[0] << std::endl;
+        // int index = 1;
+        // for (const auto& particle : particles) {        
+        //     std::cout << "Particle: " << index << ", Mass: " << particle.mass 
+        //     << ", PositionX: " << particle.posi[0] << ", PositionY: " << particle.posi[1] 
+        //     << ", VectorX: " << particle.velocity[0] << ", VectorY: " << particle.velocity[1] 
+        //     << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
+        //     index++;
+        // }
+        double dt = 0.005;
+        // int num_steps = t / dt;
+        // std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
+        std::cout <<  particles_num<<  "particles"<< std::endl;
+        // std::cout << num_steps <<  "steps"<< std::endl;
+
+        
+
+        // Transfer particles to device memory
+        Particle* d_particles;
+        size_t particlesSize = particles.size() * sizeof(Particle);
+        cudaMalloc((void**)&d_particles, particlesSize);
+        cudaMemcpy(d_particles, particles.data(), particlesSize, cudaMemcpyHostToDevice);
+
+        // Transfer particle masses to constant memory
+        float* d_masses;
+        size_t particleMassesSize = particles.size() * sizeof(float);
+        cudaMalloc((void**)&d_masses, particleMassesSize);
+        std::vector<float> particle_masses(particles.size());
+        for (int i = 0; i < particles.size(); ++i) {
+            particle_masses[i] = particles[i].mass;
         }
+        cudaMemcpy(d_masses, particle_masses.data(), particleMassesSize, cudaMemcpyHostToDevice);
 
-        Particle particle;
-        // input data
-        double m = std::stod(elements[2]);
-        double x = std::stod(elements[3]);
-        double y = std::stod(elements[4]);
-        double vx = std::stod(elements[5]);
-        double vy = std::stod(elements[6]);
-        double ax = std::stod(elements[7]);
-        double ay = std::stod(elements[8]);
-        // add the particle initial condition
-        particle.mass = m;
-        particle.posi[0]=(x);
-        particle.posi[1]=(y);
-        particle.velocity[0]=(vx);
-        particle.velocity[1]=(vy);
-        particle.acceleration[0]=(ax);
-        particle.acceleration[1]=(ay);
+        // Launch kernel
+        int blockSize = 1024;
+        int gridSize = (particles.size() + blockSize - 1) / blockSize;
 
-        // add the particle
-        particleNum++;
-        particles.push_back(particle);
+        int sharedMemSize = blockSize * sizeof(Particle);
+
+        // Start timer
+        auto start = std::chrono::high_resolution_clock::now();
+
+        simulate_particles_cuda_kernel<<<gridSize, blockSize, sharedMemSize>>>(d_particles, d_masses, G_CONST, dt, particles.size());
+        cudaDeviceSynchronize();
+
+        // End timer
+        auto end = std::chrono::high_resolution_clock::now();
+
+        // Transfer particles back to host memory
+        cudaMemcpy(particles.data(), d_particles, particlesSize, cudaMemcpyDeviceToHost);
+
+        // Cleanup
+        cudaFree(d_particles);
+        cudaFree(d_masses);
+
+        
+
+        // Calculate duration
+        std::chrono::duration<float> duration = end - start;
+        float seconds = duration.count();
+
+        // std::vector<float> system_momentum = calculate_system_momentum(particles);
+        // float system_energy = calculate_system_energy(particles, G_CONST);
+
+        // std::cout << "Verlet_velocity Time: " << (num_steps) * dt << std::endl;
+        // std::cout << "System Momentum (X, Y): (" << system_momentum[0] << ", " << system_momentum[1] << ")" << std::endl;
+        // std::cout << "System Energy: " << system_energy << std::endl;
+        std::cout << "Particles: " << particles.size() << std::endl;
+        std::cout << "Particles a: " << particles[0].acceleration[0] << std::endl;
+        // Output the runtime
+        printf("Runtime: %f seconds\n", seconds);
     }
-    std::cout << "Particles a: " << particles[0].acceleration[0] << std::endl;
-    // int index = 1;
-    // for (const auto& particle : particles) {        
-    //     std::cout << "Particle: " << index << ", Mass: " << particle.mass 
-    //     << ", PositionX: " << particle.posi[0] << ", PositionY: " << particle.posi[1] 
-    //     << ", VectorX: " << particle.velocity[0] << ", VectorY: " << particle.velocity[1] 
-    //     << ", AccelerationX: " << particle.acceleration[0] << ", AccelerationY: " << particle.acceleration[1] << std::endl;
-    //     index++;
-    // }
-    double dt = 0.005;
-    // int num_steps = t / dt;
-    // std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
-    std::cout << particleNum <<  "particles"<< std::endl;
-    // std::cout << num_steps <<  "steps"<< std::endl;
-
-    
-
-    // Transfer particles to device memory
-    Particle* d_particles;
-    size_t particlesSize = particles.size() * sizeof(Particle);
-    cudaMalloc((void**)&d_particles, particlesSize);
-    cudaMemcpy(d_particles, particles.data(), particlesSize, cudaMemcpyHostToDevice);
-
-    // Transfer particle masses to constant memory
-    float* d_masses;
-    size_t particleMassesSize = particles.size() * sizeof(float);
-    cudaMalloc((void**)&d_masses, particleMassesSize);
-    std::vector<float> particle_masses(particles.size());
-    for (int i = 0; i < particles.size(); ++i) {
-        particle_masses[i] = particles[i].mass;
-    }
-    cudaMemcpy(d_masses, particle_masses.data(), particleMassesSize, cudaMemcpyHostToDevice);
-
-    // Launch kernel
-    int blockSize = 1024;
-    int gridSize = (particles.size() + blockSize - 1) / blockSize;
-
-    int sharedMemSize = blockSize * sizeof(Particle);
-
-    // Start timer
-    auto start = std::chrono::high_resolution_clock::now();
-
-    simulate_particles_cuda_kernel<<<gridSize, blockSize, sharedMemSize>>>(d_particles, d_masses, G_CONST, dt, particles.size());
-    cudaDeviceSynchronize();
-
-    // End timer
-    auto end = std::chrono::high_resolution_clock::now();
-
-    // Transfer particles back to host memory
-    cudaMemcpy(particles.data(), d_particles, particlesSize, cudaMemcpyDeviceToHost);
-
-    // Cleanup
-    cudaFree(d_particles);
-    cudaFree(d_masses);
-
-    
-
-    // Calculate duration
-    std::chrono::duration<float> duration = end - start;
-    float seconds = duration.count();
-
-    // std::vector<float> system_momentum = calculate_system_momentum(particles);
-    // float system_energy = calculate_system_energy(particles, G_CONST);
-
-    // std::cout << "Verlet_velocity Time: " << (num_steps) * dt << std::endl;
-    // std::cout << "System Momentum (X, Y): (" << system_momentum[0] << ", " << system_momentum[1] << ")" << std::endl;
-    // std::cout << "System Energy: " << system_energy << std::endl;
-    std::cout << "Particles: " << particles.size() << std::endl;
-    std::cout << "Particles a: " << particles[0].acceleration[0] << std::endl;
-    // Output the runtime
-     printf("Runtime: %f seconds\n", seconds);
-
 
     return 0;
 }
