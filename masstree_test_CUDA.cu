@@ -227,8 +227,7 @@ int main() {
     std::cout << particleNum <<  "particles"<< std::endl;
     // std::cout << num_steps <<  "steps"<< std::endl;
 
-    // Start timer
-    auto start = std::chrono::high_resolution_clock::now();
+    
 
     // Transfer particles to device memory
     Particle* d_particles;
@@ -251,7 +250,15 @@ int main() {
     int gridSize = (particles.size() + blockSize - 1) / blockSize;
 
     int sharedMemSize = blockSize * sizeof(Particle);
+
+    // Start timer
+    auto start = std::chrono::high_resolution_clock::now();
+
     simulate_particles_cuda_kernel<<<gridSize, blockSize, sharedMemSize>>>(d_particles, d_masses, G_CONST, dt, particles.size());
+    cudaDeviceSynchronize();
+
+    // End timer
+    auto end = std::chrono::high_resolution_clock::now();
 
     // Transfer particles back to host memory
     cudaMemcpy(particles.data(), d_particles, particlesSize, cudaMemcpyDeviceToHost);
@@ -260,8 +267,7 @@ int main() {
     cudaFree(d_particles);
     cudaFree(d_masses);
 
-    // End timer
-    auto end = std::chrono::high_resolution_clock::now();
+    
 
     // Calculate duration
     std::chrono::duration<float> duration = end - start;
