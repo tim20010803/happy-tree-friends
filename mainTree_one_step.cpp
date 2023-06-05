@@ -38,96 +38,96 @@ int main() {
     
 
     // make a new file
-    std::ofstream fileOut("RuntimeTreeComplex_uni2.csv");
-    fileOut << "Type,NThread,theta,particleNumber,construct_time(s),force_time(s),total_time(s)" << std::endl;
+    std::ofstream fileOut("RuntimeTree,theta=1,thread=8(2).csv",std::ios::app);
+    // fileOut << "Type,NThread,theta,particleNumber,construct_time(s),force_time(s),total_time(s)" << std::endl;
     int pN=1000;
-    for(int j=0;j<4;j++ )
+    for(int j=0;j<5;j++ )
     {
-        // put the data into the fileOut
-        for (int Thread = 1; Thread <= 8; Thread++){
+        // // put the data into the fileOut
+        // for (int Thread = 1; Thread <= 8; Thread++){
 
-            // input the data from the file
-            std::string str = "one_step_data.csv";
-            std::string str1 = "_uni_";
-            std::string str2 = std::to_string(pN);
-            std::string str3 = ".csv";
-            str=str+str1+str2+str3;
-            std::ifstream file(str);
-            std::vector<Particle> particles; // store the particles
-            std::string line; // each line of the file data
-            bool isFirstLine = true; // if line is the first line or not
-            int particleNum =0;
-            int precision = std::min<int>(std::numeric_limits<double>::digits10 + 1,10);
+        //     // input the data from the file
+        //     std::string str = "one_step_data.csv";
+        //     std::string str1 = "_uni_";
+        //     std::string str2 = std::to_string(pN);
+        //     std::string str3 = ".csv";
+        //     str=str+str1+str2+str3;
+        //     std::ifstream file(str);
+        //     std::vector<Particle> particles; // store the particles
+        //     std::string line; // each line of the file data
+        //     bool isFirstLine = true; // if line is the first line or not
+        //     int particleNum =0;
+        //     int precision = std::min<int>(std::numeric_limits<double>::digits10 + 1,10);
             // to get all of the data
-            while (std::getline(file, line)) {
-                // delete the first line because the first line is
-                // "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY"
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue; 
-                }
+        //     while (std::getline(file, line)) {
+        //         // delete the first line because the first line is
+        //         // "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY"
+        //         if (isFirstLine) {
+        //             isFirstLine = false;
+        //             continue; 
+        //         }
 
-                // set the parameter to store data
-                std::istringstream iss(line);
-                std::string element;
-                std::vector<std::string> elements;
-                // change the line string into a vector
-                while (std::getline(iss, element, ',')) {
-                    elements.push_back(element);
-                }
+        //         // set the parameter to store data
+        //         std::istringstream iss(line);
+        //         std::string element;
+        //         std::vector<std::string> elements;
+        //         // change the line string into a vector
+        //         while (std::getline(iss, element, ',')) {
+        //             elements.push_back(element);
+        //         }
 
-                Particle particle;
-                // input data
-                double m = std::stod(elements[2]);
-                double x = std::stod(elements[3]);
-                double y = std::stod(elements[4]);
-                double vx = std::stod(elements[5]);
-                double vy = std::stod(elements[6]);
-                double ax = std::stod(elements[7]);
-                double ay = std::stod(elements[8]);
-                // add the particle initial condition
-                particle.mass = m;
-                particle.posi.push_back(x);
-                particle.posi.push_back(y);
-                particle.velocity.push_back(vx);
-                particle.velocity.push_back(vy);
-                particle.acceleration.push_back(ax);
-                particle.acceleration.push_back(ay);
-                // add the particle
-                particles.push_back(particle);
-                particleNum++;
-            }
-            file.close();
-            double grid_range = 1000.; // the range of the Tree
-            auto start = std::chrono::high_resolution_clock::now();
+        //         Particle particle;
+        //         // input data
+        //         double m = std::stod(elements[2]);
+        //         double x = std::stod(elements[3]);
+        //         double y = std::stod(elements[4]);
+        //         double vx = std::stod(elements[5]);
+        //         double vy = std::stod(elements[6]);
+        //         double ax = std::stod(elements[7]);
+        //         double ay = std::stod(elements[8]);
+        //         // add the particle initial condition
+        //         particle.mass = m;
+        //         particle.posi.push_back(x);
+        //         particle.posi.push_back(y);
+        //         particle.velocity.push_back(vx);
+        //         particle.velocity.push_back(vy);
+        //         particle.acceleration.push_back(ax);
+        //         particle.acceleration.push_back(ay);
+        //         // add the particle
+        //         particles.push_back(particle);
+        //         particleNum++;
+        //     }
+        //     file.close();
+        //     double grid_range = 1000.; // the range of the Tree
+        //     auto start = std::chrono::high_resolution_clock::now();
 
-            QuadrupleTree T(1.,Thread,particles, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range);
+        //     QuadrupleTree T(1.,Thread,particles, -1 * grid_range, -1 * grid_range, -1 * grid_range, grid_range, grid_range, grid_range);
 
 
-            auto mid = std::chrono::high_resolution_clock::now();
-            T.TreeForce();
-            T.~QuadrupleTree();
+        //     auto mid = std::chrono::high_resolution_clock::now();
+        //     T.TreeForce();
+        //     T.~QuadrupleTree();
 
-            auto end = std::chrono::high_resolution_clock::now();
+        //     auto end = std::chrono::high_resolution_clock::now();
 
-            // Calculate duration
-            std::chrono::duration<float> duration = end - start;
-            std::chrono::duration<float> ForceDuration = end - mid;
-            std::chrono::duration<float> ConsDuration = mid - start;
-            float seconds = duration.count();
-            float Fseconds = ForceDuration.count();
-            float Cseconds = ConsDuration.count();
+        //     // Calculate duration
+        //     std::chrono::duration<float> duration = end - start;
+        //     std::chrono::duration<float> ForceDuration = end - mid;
+        //     std::chrono::duration<float> ConsDuration = mid - start;
+        //     float seconds = duration.count();
+        //     float Fseconds = ForceDuration.count();
+        //     float Cseconds = ConsDuration.count();
 
-            fileOut<< std::setprecision(precision)<<"Uni"
-            << ","<<T.NThread<< ","<<T.THETA<< ","<< particleNum<< ","<<Cseconds<< ","<<Fseconds<< ","<<seconds << std::endl;
-            std::cout<< std::setprecision(precision)<<"Uni"
-            << ","<<T.NThread<< ","<<T.THETA<< ","<< particleNum<< ","<<Cseconds<< ","<<Fseconds<< ","<<seconds << std::endl;
-        }
+        //     fileOut<< std::setprecision(precision)<<"Uni"
+        //     << ","<<T.NThread<< ","<<T.THETA<< ","<< particleNum<< ","<<Cseconds<< ","<<Fseconds<< ","<<seconds << std::endl;
+        //     std::cout<< std::setprecision(precision)<<"Uni"
+        //     << ","<<T.NThread<< ","<<T.THETA<< ","<< particleNum<< ","<<Cseconds<< ","<<Fseconds<< ","<<seconds << std::endl;
+        // }
         // put the data into the fileOut
-        for (float i= 1.; i <= 6.; i++){
-
+        // for (float i= 1.; i <= 6.; i++){
+            float i=5;
             std::string str = "one_step_data.csv";
-            std::string str1 = "_uni_";
+            std::string str1 = "_Nonuni_";
             std::string str2 = std::to_string(pN);
             std::string str3 = ".csv";
             str=str+str1+str2+str3;
@@ -197,11 +197,11 @@ int main() {
             float Fseconds = ForceDuration.count();
             float Cseconds = ConsDuration.count();
 
-            fileOut<< std::setprecision(precision)<<"Uni"
+            fileOut<< std::setprecision(precision)<<"NonUni"
             << ","<<T.NThread<< ","<<T.THETA<< ","<< particleNum<< ","<<Cseconds<< ","<<Fseconds<< ","<<seconds << std::endl;
-            std::cout<< std::setprecision(precision)<<"Uni"
+            std::cout<< std::setprecision(precision)<<"NonUni"
             << ","<<T.NThread<< ","<<T.THETA<< ","<< particleNum<< ","<<Cseconds<< ","<<Fseconds<< ","<<seconds << std::endl;
-        }
+        // }
         pN*=10;
     }
     fileOut.close();
