@@ -34,6 +34,9 @@
 ## Meeting records
 - https://docs.google.com/document/d/1dTHicoDv07S-JrnXMipeCdmDJ7Y_S8J5LuA3QogfXHE/edit?pli=1
 
+## Figure and ppt file
+- https://drive.google.com/drive/folders/1O_QHlrb1KfzF5FKnar_-9aODvRQs_Bg8?usp=share_link
+
 ## Other Reference
 - Barnes-Hut-Simulator
   - GitHub code: https://github.com/beltoforion/Barnes-Hut-Simulator
