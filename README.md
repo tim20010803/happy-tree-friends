@@ -34,7 +34,43 @@
 ## Meeting records
 - https://docs.google.com/document/d/1dTHicoDv07S-JrnXMipeCdmDJ7Y_S8J5LuA3QogfXHE/edit?pli=1
 
+## Figure and ppt file
+- https://drive.google.com/drive/folders/1O_QHlrb1KfzF5FKnar_-9aODvRQs_Bg8?usp=share_link
+
 ## Other Reference
 - Barnes-Hut-Simulator
   - GitHub code: https://github.com/beltoforion/Barnes-Hut-Simulator
   - Article: https://beltoforion.de/en/barnes-hut-galaxy-simulator/
+
+# Installation
+```
+git clone https://github.com/tim20010803/happy-tree-friends.git
+```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+# Implementation
+
+1. 
+```
+cd data_
+```
+
+2. produce initial data
+```
+g++ -o produce_data_once produce_data_once.cpp
+cd output
+./produce_data_once
+```
+
+3. copy the .csv according to the initial condition you want to apply
+for example:
+```
+cp one_step_data.csv_Nonuni_1000.csv ../
+cd ..
+```
+
+4. Use the .sh files to compile and run simulations according to the algorithm you want to use.
+for example:
+```
+./compileTreeOMP.sh
+```
