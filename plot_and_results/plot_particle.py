@@ -14,7 +14,7 @@ def set_figure_index():
     ax[0].set_xlabel( 'x axis', labelpad=5 )
     ax[0].set_ylabel( 'y axis', labelpad=5, rotation='vertical' )
     ax[1].set_xlabel( 'x axis', labelpad=5 )
-    ax[1].set_ylabel( 'y axis', labelpad=5, rotation=-90 )
+    ax[1].set_ylabel( 'y axis', labelpad=10, rotation=-90 )
 
     ax[0].xaxis.label.set_fontsize(font_size)
     ax[0].yaxis.label.set_fontsize(font_size)
@@ -90,44 +90,33 @@ def update( frame ):
     # delete the old data on the figure
     ax[0].cla()
     ax[1].cla()
-    ax[0].scatter(positions_x, positions_y, c='green', s=0.05)
-    ax[1].scatter(positions_x_non, positions_y_non, c='blue', s=0.05)
+
+    ax[0].scatter(positions_x, positions_y, c='green', s=1, marker='o', edgecolor='none')
+    ax[1].scatter(positions_x_non, positions_y_non, c='blue', s=1, marker='o', edgecolor='none')
 
     set_figure_index()
 
     fig.suptitle('time = %.5f' % ( times[frame] ), c='blue')
     
-    # (x)ax[0].text( 1000, 1200, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right',horizontalalignment='center', verticalalignment='center' )
-    # (x)ax[1].text( 3750, 3700, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', horizontalalignment='center', verticalalignment='center' )
-    
-
-    #fig.text( 0.47, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error), fontsize=8, color='black', ha='right', va='center')
-    #fig.text( 0.95, 0.78, 'the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non), fontsize=8, color='black', ha='right', va='center')
-    
     Text1.set_text('the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error, P_error, L_error))
     Text2.set_text('the error of total energy= %10.3e\nthe error of total momentum = %10.3e\nthe error of total angular momentum = %10.3e' % (E_error_non, P_error_non, L_error_non))
-    
+    #print(frame)    
 
 
 # set the particle number
 num_particles = len(data['Particle'].unique())
 
 # set the range of the figure 
-x_range = 4000.0
+x_range = 3000.0
 
 # create figure
 fig, ax = plt.subplots( 1, 2, sharex=False, sharey=False, dpi=200 )
-#fig.subplots_adjust( hspace=0.0, wspace=0.5 )
 fig.subplots_adjust(left=0.12, right=0.9, bottom=0.05, top=0.95, wspace=0.3)
 Text1 = fig.text( 0.47, 0.78, '', fontsize=8, color='black', ha='right', va='center')
 Text2 = fig.text( 0.95, 0.78, '', fontsize=8, color='black', ha='right', va='center')
 
 set_figure_index()
-'''
-random_colors = np.random.randint(0, 256, size=(num_particles, 3))
-random_colors = random_colors.astype(float)
-random_colors /= 255.0
-'''
+
 # create movie
 nframe = len(data_non['Time'].unique()) # arbitrarily large
 print(nframe)
@@ -136,7 +125,7 @@ print("Tree data length:",len(data['Time']))
 print("NonTree data length:",len(data_non['Time']))
 ani   = animation.FuncAnimation( fig, func=update, frames=nframe//time_gap, interval=1, repeat=False )
 
-# ani.save('ptc_pos.gif', writer='pillow')
+ani.save('ptc_pos-3000.gif', writer='pillow')
 plt.show()
 
 
