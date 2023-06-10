@@ -49,25 +49,13 @@ git clone https://github.com/tim20010803/happy-tree-friends.git
 
 1. 
 ```
-cd data_
+cd code
 ```
 
-2. produce initial data
-```
-g++ -o produce_data_once produce_data_once.cpp
-cd output
-./produce_data_once
-```
-
-3. copy the .csv according to the initial condition you want to apply
-for example:
-```
-cp one_step_data.csv_Nonuni_1000.csv ../
-cd ..
-```
-
-4. Use the .sh files to compile and run simulations according to the algorithm you want to use.
+2. Use the .sh files to compile and run simulations according to the algorithm you want to use.
 for example:
 ```
 ./compileTreeOMP.sh
 ```
+
+3.plot with the results
