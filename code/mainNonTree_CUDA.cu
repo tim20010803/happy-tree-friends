@@ -169,7 +169,7 @@ int main() {
 
 
 
-        // // std::ifstream file("one_step_data.csv_uni_1000000.csv");
+        // // std::ifstream file("../initial_condition/one_step_data.csv_uni_1000000.csv");
         // std::vector<Particle> particles; // store the particles
         // std::string line; // each line of the file data
         // bool isFirstLine = true; // if line is the first line or not

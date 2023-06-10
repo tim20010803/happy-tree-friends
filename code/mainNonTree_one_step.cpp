@@ -16,7 +16,7 @@
 int main() {
     clock_t start_t, end_t;
     // input the data from the file
-    std::ifstream file("one_step_data.csv");
+    std::ifstream file("../initial_condition/one_step_data.csv");
     std::vector<Particle> particles; // store the particles
     std::string line; // each line of the file data
     bool isFirstLine = true; // if line is the first line or not
@@ -72,7 +72,7 @@ int main() {
     // }
     double t=3. ,dt = 0.005;
     // int num_steps = t / dt;
-    int num_steps =0;
+    int num_steps =t/dt;
     std::cout << "Physical Time: " << (num_steps)*dt <<"seconds"<< std::endl;
     std::cout << particleNum <<  "particles"<< std::endl;
     std::cout << num_steps <<  "steps"<< std::endl;
@@ -81,36 +81,36 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
     calculate_gravity(particles);
     // make a new file
-    // std::ofstream fileOut("mainNonTree_data.csv");
-    // fileOut << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
-    // int precision = std::min<int>(std::numeric_limits<double>::digits10 + 1,10);
-    // // put the data into the file
-    // for (int step = 0; step <= num_steps; step++){
-    //     for (int i = 0; i < particles.size(); i++)
-    //     {
-    //         int p = i+1;
-    //         double mass = particles[i].mass;
-    //         double posX = particles[i].posi[0];
-    //         double posY = particles[i].posi[1];
-    //         double vecX = particles[i].velocity[0];
-    //         double vecY = particles[i].velocity[1];
-    //         double accX = particles[i].acceleration[0];
-    //         double accY = particles[i].acceleration[1];
-    //         double system_energy = calculate_system_energy(particles);
-    //         std::vector<double> system_momentum = calculate_system_momentum(particles);
-    //         std::vector<double> system_angular_momentum = calculate_system_angular_momentum(particles);
+    std::ofstream fileOut("mainNonTree_data.csv");
+    fileOut << "Time,Particle,Mass,PositionX,PositionY,VectorX,VectorY,AccelerationX,AccelerationY,SystemEnergy,SystemMomentumX,SystemMomentumY,SystemAngularMomentumX,SystemAngularMomentumY" << std::endl;
+    int precision = std::min<int>(std::numeric_limits<double>::digits10 + 1,10);
+    // put the data into the file
+    for (int step = 0; step <= num_steps; step++){
+        for (int i = 0; i < particles.size(); i++)
+        {
+            int p = i+1;
+            double mass = particles[i].mass;
+            double posX = particles[i].posi[0];
+            double posY = particles[i].posi[1];
+            double vecX = particles[i].velocity[0];
+            double vecY = particles[i].velocity[1];
+            double accX = particles[i].acceleration[0];
+            double accY = particles[i].acceleration[1];
+            double system_energy = calculate_system_energy(particles);
+            std::vector<double> system_momentum = calculate_system_momentum(particles);
+            std::vector<double> system_angular_momentum = calculate_system_angular_momentum(particles);
 
 
-    //         fileOut  << std::setprecision(precision)
-    //             << std::scientific << step * dt  << "," << p  << "," << mass << "," 
-    //             << posX << "," << posY << "," << vecX << "," << vecY << "," 
-    //             << accX << "," << accY << "," << system_energy << "," 
-    //             << system_momentum[0] << "," << system_momentum[1] << "," 
-    //             << system_angular_momentum[0] << "," << system_angular_momentum[1] << std::endl;
-    //     }
-    //     Verlet_velocity(particles, dt);
-    // }
-    // fileOut.close();
+            fileOut  << std::setprecision(precision)
+                << std::scientific << step * dt  << "," << p  << "," << mass << "," 
+                << posX << "," << posY << "," << vecX << "," << vecY << "," 
+                << accX << "," << accY << "," << system_energy << "," 
+                << system_momentum[0] << "," << system_momentum[1] << "," 
+                << system_angular_momentum[0] << "," << system_angular_momentum[1] << std::endl;
+        }
+        Verlet_velocity(particles, dt);
+    }
+    fileOut.close();
     // End timer
     auto end = std::chrono::high_resolution_clock::now();
 
