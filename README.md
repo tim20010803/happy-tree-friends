@@ -49,13 +49,59 @@ git clone https://github.com/tim20010803/happy-tree-friends.git
 
 1. 
 ```
-cd code
+cd initial_condition
 ```
 
-2. Use the .sh files to compile and run simulations according to the algorithm you want to use.
-for example:
+2. Produce initial data.
+If you want to use the data we prepared, skip this step and proceed to the next one.
 ```
-./compileTreeOMP.sh
+g++ -o produce_data_once produce_data_once.cpp
+cd output
+./produce_data_once
+```
+Choose the initial condition you like and copy.
+
+The number indicates the particle number.
+
+"Uni" refers to a uniform particle density.
+
+"Nonuni" refers to an exponential distribution of particle density.For example:
+For example:
+```
+cp one_step_data.csv_Nonuni_1000.csv ../
+cd ../../code/
 ```
 
-3.plot with the results
+3. Use the .sh files to compile and run simulations according to the algorithm you want to use.
+
+"Nontree" refers to the normal algorithm.
+
+"Tree" refers to the algorithm that utilizes a tree structure.
+
+"OMP" stands for Open_MP, indicating the use of parallel processing.
+
+"One step" means performing the calculation without orbit integration.
+
+Before that, modify the particle number in the corresponding main file according to the initial condition you want to use.
+For example:
+```
+vim mainTree_one_step
+```
+find
+```
+int pN =1000;//choose particle number 
+```
+Then, compile and execute.
+```
+./compileTreeOMP_one_step.sh
+cd output
+./mainTreeOMP_one_step
+```
+
+4.Copy the results and plot.
+If the tree algorithm is used, copy the mainTree_data.csv file. Otherwise, copy the mainNontree_data.csv file.
+For example:
+```
+cp mainTree_data.csv ../../plot_and_results
+```
+
